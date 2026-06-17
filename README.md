@@ -1,58 +1,188 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# School Enrollment System
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+A web-based school enrollment system built with Laravel 13.
 
-## About Laravel
+---
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Tech Stack
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+| Layer | Tech | Version |
+|---|---|---|
+| Backend | Laravel | 13 |
+| Language | PHP | ^8.3 |
+| Database | MySQL | 8.x |
+| Frontend | Blade Templates | — |
+| CSS | Tailwind CSS | v4 |
+| Build Tool | Vite | 8 |
+| Auth | Laravel Breeze | — |
+| Testing | PHPUnit | 12 |
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+---
 
-## Learning Laravel
+## Group Members & Responsibilities
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+| Member | Role | Primary Deliverables |
+|---|---|---|
+| **Member A** | Project Lead / Back-end Core | Scaffolding, subject enrollment, middleware, deployment |
+| **Member B** | Database & Back-end Support | ERD, migrations, seeders, section CRUD, admin dashboard |
+| **Member C** | Auth & Flow Logic | Breeze auth, approval/rejection flow, UI polish |
+| **Member D** | Front-end & Documentation | Enrollment form, student records view, README & submission docs |
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+---
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+## Pending Tasks by Member
 
-## Agentic Development
+### Member A — Project Lead / Back-end Core
+- [ ] Create `CheckRole` middleware (`php artisan make:middleware CheckRole`)
+- [ ] Register `CheckRole` in `bootstrap/app.php`
+- [ ] Define model relationships (User, Student, Enrollment, etc.)
+- [ ] Set up deployment (ngrok for local sharing or InfinityFree)
 
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+### Member B — Database & Back-end Support
+- [ ] Create seeders for all tables (`php artisan make:seeder`)
+  - `SemesterSeeder` — create an active semester
+  - `UserSeeder` — seed a registrar + student account
+  - `SectionSeeder`, `SubjectSeeder`
+- [ ] Implement `Registrar/SectionController` CRUD methods
+- [ ] Implement `Registrar/SubjectController` CRUD methods
+- [ ] Build registrar admin dashboard view
+
+### Member C — Auth & Flow Logic
+- [ ] Implement `Registrar/EnrollmentController` approve/reject logic
+- [ ] Implement `Student/EnrollmentController` store + status logic
+- [ ] Build 2FA flow (Fortify install + challenge view)
+- [ ] UI polish on auth views (login, register)
+
+### Member D — Front-end & Documentation
+- [ ] Build enrollment form UI (`student/enroll.blade.php`)
+- [ ] Build student records view (`student/records.blade.php`)
+- [ ] Build registrar enrollment queue UI (`registrar/enrollments/index.blade.php`)
+- [ ] Update README with final submission docs
+
+---
+
+## Requirements
+
+- PHP 8.3+
+- Composer
+- MySQL 8.x
+- Node.js 18+ and npm
+
+---
+
+## Local Setup
 
 ```bash
-composer require laravel/boost --dev
+# 1. Clone the repo
+git clone <repo-url>
+cd SchoolEnrollmentSystem
 
-php artisan boost:install
+# 2. Install PHP dependencies
+composer install
+
+# 3. Install JS dependencies
+npm install
+
+# 4. Copy environment file and configure
+cp .env.example .env
+php artisan key:generate
+
+# 5. Create MySQL database
+mysql -u root -p -e "CREATE DATABASE school_enrollment_db;"
+
+# 6. Update DB credentials in .env
+# DB_USERNAME=root
+# DB_PASSWORD=yourpassword
+
+# 7. Run migrations
+php artisan migrate
+
+# 8. Start the dev servers (run both in separate terminals)
+php artisan serve
+npm run dev
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+Or use the setup script (Windows):
+```powershell
+.\setup.ps1
+```
 
-## Contributing
+---
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+## Sharing with Teammates (ngrok)
 
-## Code of Conduct
+ngrok creates a public URL tunneling to your local server so teammates can test on their own devices.
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+### Install ngrok
+1. Download from https://ngrok.com/download
+2. Create free account at https://ngrok.com
+3. Authenticate: `ngrok config add-authtoken <your-token>`
 
-## Security Vulnerabilities
+### Share your local server
+```bash
+# Make sure Laravel is running first
+php artisan serve
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+# In a separate terminal
+ngrok http 8000
+```
 
-## License
+Copy the `https://abc123.ngrok-free.app` URL and share with teammates.
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+### Allow ngrok host in .env
+```env
+APP_URL=https://abc123.ngrok-free.app
+SESSION_DOMAIN=.ngrok-free.app
+```
+
+> ngrok free tier URL changes every restart. Re-share each session.
+
+---
+
+## Database
+
+Database name: `school_enrollment_db`
+
+| Table | Description |
+|---|---|
+| `users` | Auth accounts (student / registrar / admin) |
+| `students` | Student profile linked to user |
+| `registrars` | Registrar profile linked to user |
+| `semesters` | Academic semester records |
+| `sections` | Class sections per semester |
+| `subjects` | Master subject list |
+| `enrollments` | Student enrollment per semester |
+| `enrollment_subjects` | Subjects per enrollment (pivot) |
+| `semester_records` | GPA and status per semester |
+
+---
+
+## Project Structure
+
+```
+app/Http/Controllers/
+  Auth/           — 2FA controller
+  Student/        — student-facing controllers
+  Registrar/      — registrar-facing controllers
+
+resources/views/
+  auth/           — login, register, 2FA
+  layouts/        — shared layouts
+  student/        — student pages
+  registrar/      — registrar pages
+
+routes/
+  web.php         — main routes (student + registrar groups)
+  auth.php        — Breeze auth routes (login, register, logout)
+
+database/migrations/
+  — all table migrations
+```
+
+---
+
+## Running Tests
+
+```bash
+php artisan test
+```

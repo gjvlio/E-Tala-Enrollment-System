@@ -1,7 +1,85 @@
 <?php
 
+use App\Http\Controllers\TestController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\Auth\TwoFactorController;
+use App\Http\Controllers\Student\DashboardController as StudentDashboard;
+use App\Http\Controllers\Student\EnrollmentController as StudentEnrollment;
+use App\Http\Controllers\Student\SubjectController as StudentSubject;
+use App\Http\Controllers\Student\RecordController as StudentRecord;
+use App\Http\Controllers\Registrar\DashboardController as RegistrarDashboard;
+use App\Http\Controllers\Registrar\EnrollmentController as RegistrarEnrollment;
+use App\Http\Controllers\Registrar\StudentController as RegistrarStudent;
+use App\Http\Controllers\Registrar\SectionController as RegistrarSection;
+use App\Http\Controllers\Registrar\SubjectController as RegistrarSubject;
+use App\Http\Controllers\Registrar\SemesterRecordController as RegistrarSemesterRecord;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return view('welcome');
+// Landing
+Route::get('/', [TestController::class, 'startPage']);
+
+// Breeze profile routes
+Route::middleware('auth')->group(function () {
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
+
+// 2FA Challenge
+Route::get('/two-factor-challenge', [TwoFactorController::class, 'showChallenge'])->name('two-factor.showChallenge');
+Route::post('/two-factor-challenge', [TwoFactorController::class, 'postChallenge'])->name('two-factor.postChallenge');
+
+// Student Routes
+Route::group(['prefix' => 'student', 'as' => 'student.', 'middleware' => ['auth', 'role:student']], function () {
+    Route::get('/dashboard', [StudentDashboard::class, 'showDashboard'])->name('showDashboard');
+
+    Route::get('/enroll', [StudentEnrollment::class, 'showEnrollForm'])->name('showEnrollForm');
+    Route::post('/enroll', [StudentEnrollment::class, 'postEnrollForm'])->name('postEnrollForm');
+    Route::get('/enrollment/status', [StudentEnrollment::class, 'showEnrollStatus'])->name('showEnrollStatus');
+
+    Route::get('/subjects', [StudentSubject::class, 'showSubjects'])->name('showSubjects');
+    Route::get('/records', [StudentRecord::class, 'showRecords'])->name('showRecords');
+});
+
+// Registrar Routes
+Route::group(['prefix' => 'registrar', 'as' => 'registrar.', 'middleware' => ['auth', 'role:registrar']], function () {
+    Route::get('/dashboard', [RegistrarDashboard::class, 'showDashboard'])->name('showDashboard');
+
+    // Enrollment management
+    Route::get('/enrollments', [RegistrarEnrollment::class, 'showEnrollments'])->name('showEnrollments');
+    Route::get('/enrollments/{enrollment}', [RegistrarEnrollment::class, 'showEnrollment'])->name('showEnrollment');
+    Route::post('/enrollments/{enrollment}/approve', [RegistrarEnrollment::class, 'approveEnrollment'])->name('approveEnrollment');
+    Route::post('/enrollments/{enrollment}/reject', [RegistrarEnrollment::class, 'rejectEnrollment'])->name('rejectEnrollment');
+
+    // Student records
+    Route::get('/students', [RegistrarStudent::class, 'showStudents'])->name('showStudents');
+    Route::get('/students/{student}', [RegistrarStudent::class, 'showStudent'])->name('showStudent');
+
+    // Sections CRUD
+    Route::group(['prefix' => 'sections', 'as' => 'sections.'], function () {
+        Route::get('/', [RegistrarSection::class, 'showSections'])->name('showSections');
+        Route::get('/create', [RegistrarSection::class, 'showCreateSection'])->name('showCreateSection');
+        Route::post('/', [RegistrarSection::class, 'postCreateSection'])->name('postCreateSection');
+        Route::get('/{section}', [RegistrarSection::class, 'showSection'])->name('showSection');
+        Route::get('/{section}/edit', [RegistrarSection::class, 'showEditSection'])->name('showEditSection');
+        Route::put('/{section}', [RegistrarSection::class, 'updateSection'])->name('updateSection');
+        Route::delete('/{section}', [RegistrarSection::class, 'deleteSection'])->name('deleteSection');
+    });
+
+    // Subjects CRUD
+    Route::group(['prefix' => 'subjects', 'as' => 'subjects.'], function () {
+        Route::get('/', [RegistrarSubject::class, 'showSubjects'])->name('showSubjects');
+        Route::get('/create', [RegistrarSubject::class, 'showCreateSubject'])->name('showCreateSubject');
+        Route::post('/', [RegistrarSubject::class, 'postCreateSubject'])->name('postCreateSubject');
+        Route::get('/{subject}', [RegistrarSubject::class, 'showSubject'])->name('showSubject');
+        Route::get('/{subject}/edit', [RegistrarSubject::class, 'showEditSubject'])->name('showEditSubject');
+        Route::put('/{subject}', [RegistrarSubject::class, 'updateSubject'])->name('updateSubject');
+        Route::delete('/{subject}', [RegistrarSubject::class, 'deleteSubject'])->name('deleteSubject');
+    });
+
+    // Semester records
+    Route::get('/records/{student}', [RegistrarSemesterRecord::class, 'showSemesterRecord'])->name('showSemesterRecord');
+    Route::put('/records/{student}', [RegistrarSemesterRecord::class, 'updateSemesterRecord'])->name('updateSemesterRecord');
+});
+
+require __DIR__.'/auth.php';
