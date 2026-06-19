@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Student;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use App\Models\Semester;
 
 class DashboardController extends Controller
 {
@@ -14,5 +15,13 @@ class DashboardController extends Controller
         // TODO: $semester = \App\Models\Semester::where('is_active', true)->first();
         // TODO: $enrollment = $student->enrollments()->where('semester_id', $semester->id)->first();
         // return view('student.dashboard', compact('student', 'semester', 'enrollment'));
+
+        $student  = auth()->user()->student;
+        $semester = Semester::where('is_active', true)->first();
+        $enrollment = $student && $semester
+        ? $student->enrollments()->where('semester_id', $semester->id)->first()
+        : null;
+
+    return view('student.dashboard', compact('student', 'semester', 'enrollment'));
     }
 }

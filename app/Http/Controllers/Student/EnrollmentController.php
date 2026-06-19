@@ -14,6 +14,7 @@ class EnrollmentController extends Controller
         // TODO: $sections = \App\Models\Section::where('semester_id', $semester->id)->get();
         // TODO: $subjects = \App\Models\Subject::all();
         // return view('student.enroll', compact('semester', 'sections', 'subjects'));
+        return view('student.enroll'); // TEMP: Matan added this to preview UI, remove once real data is wired up
     }
 
     // Submit enrollment form — create enrollment + attach selected subjects

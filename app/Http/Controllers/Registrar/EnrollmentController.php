@@ -14,6 +14,7 @@ class EnrollmentController extends Controller
         //           ->when($request->status, fn($q) => $q->where('status', $request->status))
         //           ->latest()->paginate(20);
         // return view('registrar.enrollments.index', compact('enrollments'));
+        return view('registrar.enrollments.index'); // TEMP: Matan added this to preview UI
     }
 
     // Show a single enrollment with student info and enrolled subjects

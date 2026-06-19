@@ -15,6 +15,7 @@ use App\Http\Controllers\Registrar\SubjectController as RegistrarSubject;
 use App\Http\Controllers\Registrar\SemesterRecordController as RegistrarSemesterRecord;
 use Illuminate\Support\Facades\Route;
 
+
 // Landing
 Route::get('/', [TestController::class, 'startPage']);
 
@@ -81,5 +82,16 @@ Route::group(['prefix' => 'registrar', 'as' => 'registrar.', 'middleware' => ['a
     Route::get('/records/{student}', [RegistrarSemesterRecord::class, 'showSemesterRecord'])->name('showSemesterRecord');
     Route::put('/records/{student}', [RegistrarSemesterRecord::class, 'updateSemesterRecord'])->name('updateSemesterRecord');
 });
+
+// Generic dashboard redirect — used by Breeze's navigation.blade.php
+Route::get('/dashboard', function () {
+    $role = auth()->user()->role;
+    if ($role === 'student') {
+        return redirect()->route('student.showDashboard');
+    } elseif ($role === 'registrar') {
+        return redirect()->route('registrar.showDashboard');
+    }
+    return redirect('/');
+})->middleware('auth')->name('dashboard');
 
 require __DIR__.'/auth.php';

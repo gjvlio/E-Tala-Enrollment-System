@@ -13,5 +13,6 @@ class RecordController extends Controller
         // TODO: $student = auth()->user()->student;
         // TODO: $records = $student->semesterRecords()->orderBy('academic_year')->orderBy('semester')->get();
         // return view('student.records', compact('records'));
+        return view('student.records'); // TEMP: Matan added this to preview UI, remove once real data is wired up
     }
 }
