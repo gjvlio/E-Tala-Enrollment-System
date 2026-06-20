@@ -1,7 +1,36 @@
 // Body
-$body-bg: #f8fafc;
+$body-bg: #f0f4f8;
 
 // Typography
 $font-family-sans-serif: 'Nunito', sans-serif;
-$font-size-base: 0.9rem;
-$line-height-base: 1.6;
+$font-size-base: 0.925rem;
+$line-height-base: 1.65;
+
+// Brand colors
+$primary:   #4361ee;
+$secondary: #6c757d;
+$success:   #2dc653;
+$danger:    #e63946;
+$warning:   #f4a261;
+$info:      #4cc9f0;
+
+// Components
+$border-radius:    0.5rem;
+$border-radius-sm: 0.35rem;
+$border-radius-lg: 0.75rem;
+
+// Cards
+$card-border-radius: 0.75rem;
+$card-border-color:  rgba(0,0,0,.08);
+$card-box-shadow:    0 2px 12px rgba(0,0,0,.07);
+
+// Inputs
+$input-border-radius:    0.5rem;
+$input-border-color:     #d0d7de;
+$input-focus-border-color: $primary;
+$input-focus-box-shadow: 0 0 0 0.2rem rgba($primary, 0.15);
+
+// Navbar
+$navbar-dark-color:           rgba(255,255,255,.85);
+$navbar-dark-hover-color:     #fff;
+$navbar-dark-active-color:    #fff;

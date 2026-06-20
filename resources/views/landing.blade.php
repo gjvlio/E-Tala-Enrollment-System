@@ -3,40 +3,50 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>{{ config('app.name', 'School Enrollment System') }}</title>
+    <meta name="description" content="SHS Online Enrollment Portal — Register, enroll, and track your academic records online.">
+    <title>{{ config('app.name', 'School Enrollment System') }} — SHS Online Portal</title>
     @vite(['resources/sass/app.scss', 'resources/js/app.js'])
 </head>
-<body class="bg-light">
+<body>
 
     <div class="d-flex flex-column min-vh-100">
 
         {{-- Hero header --}}
-        <header class="text-center py-5">
-            <i class="bi bi-mortarboard-fill text-primary" style="font-size: 3rem;"></i>
-            <h1 class="fw-bold mt-3 mb-1">School Enrollment System</h1>
-            <p class="text-muted">Senior High School — Online Enrollment Portal</p>
+        <header class="landing-hero">
+            <div class="auth-brand-icon mx-auto">
+                <i class="bi bi-mortarboard-fill"></i>
+            </div>
+            <h1 class="fw-bold mt-2 mb-1">School Enrollment System</h1>
+            <p class="text-muted mb-0">Senior High School — Online Enrollment Portal</p>
+            <p class="text-muted small">Manage your SHS enrollment easily, from anywhere.</p>
         </header>
 
         {{-- Role selection --}}
-        <main class="flex-grow-1 d-flex align-items-center">
+        <main class="flex-grow-1 d-flex align-items-start align-items-md-center pb-5">
             <div class="container">
-                <p class="text-center text-uppercase text-muted small fw-bold mb-4">Choose how you want to continue</p>
+
+                <p class="text-center text-uppercase fw-bold small text-muted mb-4"
+                   style="letter-spacing: .08em; font-size: .75rem;">
+                    Choose how you want to continue
+                </p>
 
                 <div class="row justify-content-center g-4">
-                    {{-- Student --}}
+
+                    {{-- Student card --}}
                     <div class="col-md-5 col-lg-4">
-                        <div class="card h-100 shadow-sm border-0 text-center">
-                            <div class="card-body p-4">
-                                <div class="rounded-circle bg-primary bg-opacity-10 d-inline-flex p-4 mb-3">
-                                    <i class="bi bi-person-badge text-primary" style="font-size: 2.5rem;"></i>
+                        <div class="card role-card h-100 shadow-sm border-0 text-center">
+                            <div class="card-body p-4 p-md-5">
+                                <div class="rounded-circle bg-primary bg-opacity-10 d-inline-flex p-4 mb-3"
+                                     style="width:80px;height:80px;align-items:center;justify-content:center;">
+                                    <i class="bi bi-person-badge text-primary" style="font-size: 2rem;"></i>
                                 </div>
-                                <h4 class="fw-bold">I'm a Student</h4>
+                                <h4 class="fw-bold mb-2">I'm a Student</h4>
                                 <p class="text-muted small mb-4">
-                                    Register, enroll for the active semester, and track your records.
+                                    Register, enroll for the active semester, and track your grades and records online.
                                 </p>
                                 <div class="d-grid gap-2">
                                     <a href="{{ route('register') }}" class="btn btn-primary">
-                                        Register / Enroll
+                                        <i class="bi bi-person-plus me-1"></i> Register / Enroll
                                     </a>
                                     <a href="{{ route('login') }}" class="btn btn-outline-secondary btn-sm">
                                         Already have an account? Log in
@@ -46,33 +56,39 @@
                         </div>
                     </div>
 
-                    {{-- Registrar --}}
+                    {{-- Registrar card --}}
                     <div class="col-md-5 col-lg-4">
-                        <div class="card h-100 shadow-sm border-0 text-center">
-                            <div class="card-body p-4">
-                                <div class="rounded-circle bg-dark bg-opacity-10 d-inline-flex p-4 mb-3">
-                                    <i class="bi bi-shield-lock text-dark" style="font-size: 2.5rem;"></i>
+                        <div class="card role-card h-100 shadow-sm border-0 text-center">
+                            <div class="card-body p-4 p-md-5">
+                                <div class="rounded-circle bg-dark bg-opacity-10 d-inline-flex p-4 mb-3"
+                                     style="width:80px;height:80px;align-items:center;justify-content:center;">
+                                    <i class="bi bi-shield-lock text-dark" style="font-size: 2rem;"></i>
                                 </div>
-                                <h4 class="fw-bold">I'm a Registrar</h4>
+                                <h4 class="fw-bold mb-2">I'm a Registrar</h4>
                                 <p class="text-muted small mb-4">
-                                    Manage semesters, sections, subjects, and review enrollments.
+                                    Manage semesters, sections, subjects, students, and review enrollment applications.
                                 </p>
                                 <div class="d-grid gap-2">
                                     <a href="{{ route('login') }}" class="btn btn-dark">
-                                        Registrar Log in
+                                        <i class="bi bi-box-arrow-in-right me-1"></i> Registrar Log In
                                     </a>
-                                    <span class="text-muted small">Accounts are created by the school admin.</span>
+                                    <span class="text-muted small py-1">
+                                        <i class="bi bi-info-circle me-1"></i>
+                                        Accounts are created by the school admin.
+                                    </span>
                                 </div>
                             </div>
                         </div>
                     </div>
+
                 </div>
             </div>
         </main>
 
-        <footer class="text-center text-muted small py-4">
-            &copy; {{ date('Y') }} School Enrollment System
+        <footer class="text-center text-muted small py-4 border-top">
+            &copy; {{ date('Y') }} School Enrollment System &middot; All rights reserved
         </footer>
+
     </div>
 
 </body>

@@ -1,5 +1,5 @@
 // Fonts
-@import url('https://fonts.bunny.net/css?family=Nunito');
+@import url('https://fonts.bunny.net/css?family=Nunito:400,600,700,800');
 
 // Variables
 @import 'variables';
@@ -9,3 +9,225 @@
 
 // Bootstrap Icons
 @import 'bootstrap-icons/font/bootstrap-icons.css';
+
+// ─── Custom Styles ─────────────────────────────────────────────────────────────
+
+// Smooth transitions globally
+* { transition: border-color .15s ease, box-shadow .15s ease; }
+a, .btn { transition: all .18s ease !important; }
+
+// ── Auth / Guest Layout ───────────────────────────────────────────────────────
+.auth-brand-icon {
+    width: 52px;
+    height: 52px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, $primary 0%, lighten($primary, 20%) 100%);
+    border-radius: 14px;
+    color: #fff;
+    font-size: 1.6rem;
+    box-shadow: 0 4px 14px rgba($primary, .35);
+    margin-bottom: .75rem;
+}
+
+.guest-wrapper {
+    min-height: 100vh;
+    background: linear-gradient(145deg, #e8edf8 0%, #f0f4f8 60%, #e8f0fe 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1rem;
+}
+
+.auth-card {
+    width: 100%;
+    max-width: 460px;
+    border: none;
+    border-radius: 1rem;
+    box-shadow: 0 8px 32px rgba(0,0,0,.1), 0 1px 3px rgba(0,0,0,.06);
+    overflow: hidden;
+}
+
+// Register card can be wider
+.auth-card--wide {
+    max-width: 640px;
+}
+
+.auth-card .card-header {
+    background: linear-gradient(135deg, $primary 0%, darken($primary, 10%) 100%);
+    border-bottom: none;
+    padding: 1.5rem 2rem;
+    color: #fff;
+}
+
+.auth-card .card-body {
+    padding: 2rem;
+}
+
+// ── Navbar ─────────────────────────────────────────────────────────────────────
+.navbar {
+    box-shadow: 0 1px 8px rgba(0,0,0,.12);
+    padding-top: .6rem;
+    padding-bottom: .6rem;
+}
+
+.navbar-brand {
+    font-weight: 800;
+    letter-spacing: -.3px;
+}
+
+// ── Sidebar ────────────────────────────────────────────────────────────────────
+.sidebar {
+    width: 230px;
+    flex-shrink: 0;
+    background: #fff;
+    border-right: 1px solid rgba(0,0,0,.07);
+    padding: 1.5rem 1rem;
+    min-height: calc(100vh - 56px);
+
+    .sidebar-label {
+        font-size: .7rem;
+        font-weight: 800;
+        letter-spacing: .08em;
+        color: #9aa5b4;
+        text-transform: uppercase;
+        padding: 0 .5rem;
+        margin-bottom: .5rem;
+    }
+
+    .nav-link {
+        border-radius: .5rem;
+        padding: .55rem .85rem;
+        font-weight: 600;
+        color: #4a5568;
+        display: flex;
+        align-items: center;
+        gap: .5rem;
+
+        &:hover {
+            background: rgba($primary, .06);
+            color: $primary;
+        }
+
+        &.active {
+            background: rgba($primary, .12);
+            color: $primary;
+            font-weight: 700;
+        }
+
+        i { font-size: 1rem; }
+    }
+}
+
+// ── Password hint ──────────────────────────────────────────────────────────────
+.password-hint {
+    font-size: .775rem;
+    color: #7b8794;
+    margin-top: .3rem;
+    line-height: 1.4;
+    display: flex;
+    align-items: flex-start;
+    gap: .3rem;
+
+    i { margin-top: .05rem; flex-shrink: 0; }
+}
+
+// ── Show/hide password toggle ──────────────────────────────────────────────────
+.input-password-group {
+    position: relative;
+
+    .form-control {
+        padding-right: 2.75rem;
+    }
+
+    .password-toggle {
+        position: absolute;
+        right: .65rem;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        padding: 0;
+        color: #9aa5b4;
+        cursor: pointer;
+        font-size: 1rem;
+        line-height: 1;
+
+        &:hover { color: $primary; }
+    }
+}
+
+// ── Cards ──────────────────────────────────────────────────────────────────────
+.card {
+    border: 1px solid rgba(0,0,0,.07);
+    box-shadow: 0 2px 8px rgba(0,0,0,.05);
+}
+
+.card-hover {
+    transition: transform .18s ease, box-shadow .18s ease !important;
+    &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(0,0,0,.1) !important;
+    }
+}
+
+// ── Tables ─────────────────────────────────────────────────────────────────────
+.table th {
+    font-size: .78rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    color: #7b8794;
+}
+
+// ── Stat card ──────────────────────────────────────────────────────────────────
+.stat-card {
+    border-left: 4px solid;
+    border-radius: .75rem;
+
+    &.stat-warning  { border-left-color: $warning; }
+    &.stat-success  { border-left-color: $success; }
+    &.stat-danger   { border-left-color: $danger;  }
+    &.stat-primary  { border-left-color: $primary; }
+}
+
+// ── Buttons ────────────────────────────────────────────────────────────────────
+.btn {
+    font-weight: 700;
+    letter-spacing: .01em;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, $primary, darken($primary, 10%));
+    border-color: $primary;
+    box-shadow: 0 2px 8px rgba($primary, .3);
+
+    &:hover {
+        background: linear-gradient(135deg, darken($primary, 6%), darken($primary, 16%));
+        border-color: darken($primary, 8%);
+        box-shadow: 0 4px 14px rgba($primary, .4);
+        transform: translateY(-1px);
+    }
+}
+
+// ── Landing page ───────────────────────────────────────────────────────────────
+.landing-hero {
+    background: linear-gradient(150deg, #e8edf8 0%, #f0f4f8 100%);
+    padding: 4rem 1rem 3rem;
+    text-align: center;
+
+    h1 { font-weight: 800; letter-spacing: -.5px; }
+}
+
+.role-card {
+    border: 2px solid transparent;
+    transition: border-color .18s ease, transform .18s ease, box-shadow .18s ease;
+
+    &:hover {
+        border-color: rgba($primary, .4);
+        transform: translateY(-4px);
+        box-shadow: 0 10px 30px rgba(0,0,0,.1) !important;
+    }
+}
+
