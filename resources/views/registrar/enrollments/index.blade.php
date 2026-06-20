@@ -1,9 +1,6 @@
-<x-app-layout>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('Enrollment Queue') }}
-        </h2>
-    </x-slot>
+@extends('layouts.registrar')
+@section('title', 'Enrollment Queue')
+@section('content')
 
     {{--
         DUMMY DATA NOTICE:
@@ -13,8 +10,7 @@
         and passes a real paginated collection, replace this block.
 
         Expected real shape per enrollment: id, status, created_at,
-        student->first_name, student->last_name, section->section_name,
-        semester->school_year
+        student->first_name, student->last_name, section->section_name
     --}}
     @php
         $enrollments = $enrollments ?? collect([
@@ -40,97 +36,84 @@
             ],
         ]);
 
-        $statusStyles = [
-            'pending'  => 'bg-yellow-100 text-yellow-800',
-            'approved' => 'bg-green-100 text-green-800',
-            'rejected' => 'bg-red-100 text-red-800',
-        ];
-
         $currentFilter = request('status');
     @endphp
 
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 space-y-6">
+    <h4 class="fw-bold mb-4">Enrollment Queue</h4>
 
-            @if (session('success'))
-                <div class="bg-green-100 border border-green-300 text-green-800 px-4 py-3 rounded-md">
-                    {{ session('success') }}
-                </div>
-            @endif
+    @if (session('success'))
+        <div class="alert alert-success">{{ session('success') }}</div>
+    @endif
 
-            {{-- Status filter tabs --}}
-            <div class="flex gap-2 border-b border-gray-200">
-                @php
-                    $tabs = ['' => 'All', 'pending' => 'Pending', 'approved' => 'Approved', 'rejected' => 'Rejected'];
-                @endphp
-                @foreach ($tabs as $value => $label)
-                    <a href="{{ route('registrar.showEnrollments', $value ? ['status' => $value] : []) }}"
-                       class="px-4 py-2 text-sm font-medium border-b-2 {{ $currentFilter === $value || (!$currentFilter && $value === '') ? 'border-indigo-600 text-indigo-600' : 'border-transparent text-gray-500 hover:text-gray-700' }}">
-                        {{ $label }}
-                    </a>
-                @endforeach
-            </div>
+    {{-- Status filter tabs --}}
+    <ul class="nav nav-tabs mb-3">
+        @php $tabs = ['' => 'All', 'pending' => 'Pending', 'approved' => 'Approved', 'rejected' => 'Rejected']; @endphp
+        @foreach ($tabs as $value => $label)
+            <li class="nav-item">
+                <a href="{{ route('registrar.showEnrollments', $value ? ['status' => $value] : []) }}"
+                   class="nav-link {{ ($currentFilter === $value || (!$currentFilter && $value === '')) ? 'active' : '' }}">
+                    {{ $label }}
+                </a>
+            </li>
+        @endforeach
+    </ul>
 
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                @if ($enrollments->isEmpty())
-                    <p class="px-6 py-8 text-center text-gray-400">No enrollments found.</p>
-                @else
-                    <table class="w-full text-sm text-left">
-                        <thead class="bg-gray-50 text-gray-500 uppercase text-xs">
+    <div class="card shadow-sm">
+        @if ($enrollments->isEmpty())
+            <div class="card-body text-center text-muted">No enrollments found.</div>
+        @else
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Student</th>
+                            <th>Section</th>
+                            <th>Status</th>
+                            <th>Submitted</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach ($enrollments as $enrollment)
                             <tr>
-                                <th class="px-6 py-3">Student</th>
-                                <th class="px-6 py-3">Section</th>
-                                <th class="px-6 py-3">Status</th>
-                                <th class="px-6 py-3">Submitted</th>
-                                <th class="px-6 py-3 text-right">Actions</th>
+                                <td>
+                                    <a href="{{ route('registrar.showEnrollment', $enrollment->id) }}">
+                                        {{ $enrollment->student->first_name }} {{ $enrollment->student->last_name }}
+                                    </a>
+                                </td>
+                                <td class="text-muted">{{ $enrollment->section->section_name }}</td>
+                                <td>
+                                    @php
+                                        $badgeClass = match($enrollment->status) {
+                                            'approved' => 'text-bg-success',
+                                            'rejected' => 'text-bg-danger',
+                                            default    => 'text-bg-warning',
+                                        };
+                                    @endphp
+                                    <span class="badge {{ $badgeClass }}">{{ ucfirst($enrollment->status) }}</span>
+                                </td>
+                                <td class="text-muted">{{ $enrollment->created_at->format('M d, Y') }}</td>
+                                <td class="text-end">
+                                    @if ($enrollment->status === 'pending')
+                                        <form method="POST" action="{{ route('registrar.approveEnrollment', $enrollment->id) }}" class="d-inline">
+                                            @csrf
+                                            <button type="submit" class="btn btn-sm btn-success">Approve</button>
+                                        </form>
+                                        <form method="POST" action="{{ route('registrar.rejectEnrollment', $enrollment->id) }}" class="d-inline ms-1">
+                                            @csrf
+                                            <button type="submit" class="btn btn-sm btn-danger">Reject</button>
+                                        </form>
+                                    @else
+                                        <a href="{{ route('registrar.showEnrollment', $enrollment->id) }}"
+                                           class="btn btn-sm btn-outline-secondary">View</a>
+                                    @endif
+                                </td>
                             </tr>
-                        </thead>
-                        <tbody class="divide-y divide-gray-100">
-                            @foreach ($enrollments as $enrollment)
-                                <tr>
-                                    <td class="px-6 py-4 text-gray-800">
-                                        <a href="{{ route('registrar.showEnrollment', $enrollment->id) }}" class="hover:underline">
-                                            {{ $enrollment->student->first_name }} {{ $enrollment->student->last_name }}
-                                        </a>
-                                    </td>
-                                    <td class="px-6 py-4 text-gray-600">
-                                        {{ $enrollment->section->section_name }}
-                                    </td>
-                                    <td class="px-6 py-4">
-                                        <span class="px-2 py-1 rounded-full text-xs font-medium {{ $statusStyles[$enrollment->status] ?? 'bg-gray-100 text-gray-800' }}">
-                                            {{ ucfirst($enrollment->status) }}
-                                        </span>
-                                    </td>
-                                    <td class="px-6 py-4 text-gray-500">
-                                        {{ $enrollment->created_at->format('M d, Y') }}
-                                    </td>
-                                    <td class="px-6 py-4 text-right space-x-2">
-                                        @if ($enrollment->status === 'pending')
-                                            <form method="POST" action="{{ route('registrar.approveEnrollment', $enrollment->id) }}" class="inline">
-                                                @csrf
-                                                <button type="submit" class="text-green-600 hover:text-green-800 font-medium">
-                                                    Approve
-                                                </button>
-                                            </form>
-                                            <form method="POST" action="{{ route('registrar.rejectEnrollment', $enrollment->id) }}" class="inline">
-                                                @csrf
-                                                <button type="submit" class="text-red-600 hover:text-red-800 font-medium">
-                                                    Reject
-                                                </button>
-                                            </form>
-                                        @else
-                                            <a href="{{ route('registrar.showEnrollment', $enrollment->id) }}" class="text-indigo-600 hover:underline">
-                                                View
-                                            </a>
-                                        @endif
-                                    </td>
-                                </tr>
-                            @endforeach
-                        </tbody>
-                    </table>
-                @endif
+                        @endforeach
+                    </tbody>
+                </table>
             </div>
-
-        </div>
+        @endif
     </div>
-</x-app-layout>
+
+@endsection

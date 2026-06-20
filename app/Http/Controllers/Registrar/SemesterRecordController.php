@@ -12,6 +12,7 @@ class SemesterRecordController extends Controller
     {
         // TODO: $student = \App\Models\Student::with('semesterRecords')->findOrFail($student);
         // return view('registrar.records.show', compact('student'));
+        return view('registrar.records.show'); // TEMP: remove once real data is wired up
     }
 
     // Update a student's semester record — set GPA, status, remarks

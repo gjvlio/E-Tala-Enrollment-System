@@ -22,6 +22,7 @@ class EnrollmentController extends Controller
     {
         // TODO: $enrollment = \App\Models\Enrollment::with(['student', 'section', 'subjects'])->findOrFail($enrollment);
         // return view('registrar.enrollments.show', compact('enrollment'));
+        return view('registrar.enrollments.show'); // TEMP: remove once real data is wired up
     }
 
     // Approve an enrollment — set status = 'approved', record approver and timestamp

@@ -12,12 +12,14 @@ class SubjectController extends Controller
     {
         // TODO: $subjects = \App\Models\Subject::paginate(20);
         // return view('registrar.subjects.index', compact('subjects'));
+        return view('registrar.subjects.index'); // TEMP: remove once real data is wired up
     }
 
     // Show form to create a new subject
     public function showCreateSubject()
     {
         // return view('registrar.subjects.form');
+        return view('registrar.subjects.form'); // TEMP: remove once real data is wired up
     }
 
     // Save new subject to database
@@ -33,6 +35,7 @@ class SubjectController extends Controller
     {
         // TODO: $subject = \App\Models\Subject::findOrFail($subject);
         // return view('registrar.subjects.show', compact('subject'));
+        return redirect()->route('registrar.subjects.showEditSubject', $subject); // no separate show view
     }
 
     // Show form to edit existing subject
@@ -40,6 +43,7 @@ class SubjectController extends Controller
     {
         // TODO: $subject = \App\Models\Subject::findOrFail($subject);
         // return view('registrar.subjects.form', compact('subject'));
+        return view('registrar.subjects.form'); // TEMP: remove once real data is wired up
     }
 
     // Update existing subject

@@ -15,6 +15,7 @@ class StudentController extends Controller
         //               ->orWhere('student_number', 'like', "%{$request->search}%"))
         //           ->paginate(20);
         // return view('registrar.students.index', compact('students'));
+        return view('registrar.students.index'); // TEMP: remove once real data is wired up
     }
 
     // Show a single student's full profile and enrollment history
@@ -22,5 +23,6 @@ class StudentController extends Controller
     {
         // TODO: $student = \App\Models\Student::with(['enrollments.section', 'enrollments.subjects', 'semesterRecords'])->findOrFail($student);
         // return view('registrar.students.show', compact('student'));
+        return view('registrar.students.show'); // TEMP: remove once real data is wired up
     }
 }

@@ -12,6 +12,7 @@ class SectionController extends Controller
     {
         // TODO: $sections = \App\Models\Section::with('semester')->paginate(20);
         // return view('registrar.sections.index', compact('sections'));
+        return view('registrar.sections.index'); // TEMP: remove once real data is wired up
     }
 
     // Show form to create a new section
@@ -19,6 +20,7 @@ class SectionController extends Controller
     {
         // TODO: $semesters = \App\Models\Semester::all();
         // return view('registrar.sections.form', compact('semesters'));
+        return view('registrar.sections.form'); // TEMP: remove once real data is wired up
     }
 
     // Save new section to database
@@ -34,6 +36,7 @@ class SectionController extends Controller
     {
         // TODO: $section = \App\Models\Section::with('semester')->findOrFail($section);
         // return view('registrar.sections.show', compact('section'));
+        return redirect()->route('registrar.sections.showEditSection', $section); // no separate show view
     }
 
     // Show form to edit existing section
@@ -42,6 +45,7 @@ class SectionController extends Controller
         // TODO: $section = \App\Models\Section::findOrFail($section);
         // TODO: $semesters = \App\Models\Semester::all();
         // return view('registrar.sections.form', compact('section', 'semesters'));
+        return view('registrar.sections.form'); // TEMP: remove once real data is wired up
     }
 
     // Update existing section
