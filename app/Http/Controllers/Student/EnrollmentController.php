@@ -33,5 +33,6 @@ class EnrollmentController extends Controller
         // TODO: $student = auth()->user()->student;
         // TODO: $enrollment = $student->enrollments()->with(['section', 'semester', 'subjects'])->latest()->first();
         // return view('student.status', compact('enrollment'));
+        return view('student.status'); // TEMP: remove once real data is wired up
     }
 }

@@ -15,5 +15,6 @@ class SubjectController extends Controller
         // TODO: $enrollment = $student->enrollments()->where('semester_id', $semester->id)->firstOrFail();
         // TODO: $subjects = $enrollment->subjects; // includes pivot grade + status
         // return view('student.subjects', compact('subjects', 'enrollment'));
+        return view('student.subjects'); // TEMP: remove once real data is wired up
     }
 }

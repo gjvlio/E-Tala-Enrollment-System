@@ -1,9 +1,6 @@
-<x-app-layout>
-    <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
-            {{ __('My Records') }}
-        </h2>
-    </x-slot>
+@extends('layouts.student')
+@section('title', 'My Records')
+@section('content')
 
     {{--
         DUMMY DATA NOTICE:
@@ -14,67 +11,56 @@
             return view('student.records', compact('records'));
 
         Each real $records item is expected to be a SemesterRecord model with:
-        academic_year, semester, gpa, status (enum: e.g. 'completed', 'ongoing', 'incomplete')
+        academic_year, semester, gpa, status (enum: 'completed', 'ongoing', 'incomplete')
     --}}
     @php
         $records = $records ?? collect([
             (object)['academic_year' => '2025-2026', 'semester' => '1st Semester', 'gpa' => 1.75, 'status' => 'completed'],
             (object)['academic_year' => '2025-2026', 'semester' => '2nd Semester', 'gpa' => 1.62, 'status' => 'completed'],
-            (object)['academic_year' => '2026-2027', 'semester' => '1st Semester', 'gpa' => null, 'status' => 'ongoing'],
+            (object)['academic_year' => '2026-2027', 'semester' => '1st Semester', 'gpa' => null,  'status' => 'ongoing'],
         ]);
 
-        $statusStyles = [
-            'completed' => 'bg-green-100 text-green-800',
-            'ongoing'   => 'bg-blue-100 text-blue-800',
-            'incomplete' => 'bg-red-100 text-red-800',
-            'pending'   => 'bg-yellow-100 text-yellow-800',
+        $badgeClass = [
+            'completed'  => 'text-bg-success',
+            'ongoing'    => 'text-bg-primary',
+            'incomplete' => 'text-bg-danger',
+            'pending'    => 'text-bg-warning',
         ];
     @endphp
 
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 flex gap-6">
+    <h4 class="fw-bold mb-4">Semester Records</h4>
 
-            @include('layouts.student-sidebar')
-
-            <div class="flex-1 bg-white overflow-hidden shadow-sm rounded-lg p-6">
-
-                <h3 class="text-lg font-semibold mb-4">Semester Records</h3>
-
-                @if($records->isEmpty())
-                    <p class="text-gray-500 text-sm">No semester records found yet.</p>
-                @else
-                    <div class="overflow-x-auto">
-                        <table class="min-w-full divide-y divide-gray-200">
-                            <thead class="bg-gray-50">
-                                <tr>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Academic Year</th>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Semester</th>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">GPA</th>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                                </tr>
-                            </thead>
-                            <tbody class="bg-white divide-y divide-gray-200">
-                                @foreach($records as $record)
-                                    <tr>
-                                        <td class="px-4 py-3 text-sm text-gray-700">{{ $record->academic_year }}</td>
-                                        <td class="px-4 py-3 text-sm text-gray-700">{{ $record->semester }}</td>
-                                        <td class="px-4 py-3 text-sm text-gray-700">
-                                            {{ $record->gpa !== null ? number_format($record->gpa, 2) : '—' }}
-                                        </td>
-                                        <td class="px-4 py-3 text-sm">
-                                            <span class="px-2 py-1 rounded-full text-xs font-medium {{ $statusStyles[$record->status] ?? 'bg-gray-100 text-gray-800' }}">
-                                                {{ ucfirst($record->status) }}
-                                            </span>
-                                        </td>
-                                    </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-                @endif
-
+    @if ($records->isEmpty())
+        <p class="text-muted">No semester records found yet.</p>
+    @else
+        <div class="card shadow-sm">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Academic Year</th>
+                            <th>Semester</th>
+                            <th>GPA</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach ($records as $record)
+                            <tr>
+                                <td>{{ $record->academic_year }}</td>
+                                <td>{{ $record->semester }}</td>
+                                <td>{{ $record->gpa !== null ? number_format($record->gpa, 2) : '—' }}</td>
+                                <td>
+                                    <span class="badge {{ $badgeClass[$record->status] ?? 'text-bg-secondary' }}">
+                                        {{ ucfirst($record->status) }}
+                                    </span>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
             </div>
-
         </div>
-    </div>
-</x-app-layout>
+    @endif
+
+@endsection
