@@ -2,78 +2,86 @@
 @section('title', 'Students')
 @section('content')
 
-    {{--
-        DUMMY DATA NOTICE:
-        $students below is hardcoded so this page works standalone before
-        Registrar\StudentController@showStudents passes real data.
-        Expected shape: id, student_number, first_name, last_name,
-        user->{email}, latestEnrollment->{status} (nullable)
-    --}}
-    @php
-        $students = $students ?? collect([
-            (object)['id' => 1, 'student_number' => '2025-0001', 'first_name' => 'Maria',  'last_name' => 'Santos',    'user' => (object)['email' => 'maria@example.com'],   'latestEnrollment' => (object)['status' => 'approved']],
-            (object)['id' => 2, 'student_number' => '2025-0002', 'first_name' => 'Carlos', 'last_name' => 'Mendoza',   'user' => (object)['email' => 'carlos@example.com'],  'latestEnrollment' => (object)['status' => 'pending']],
-            (object)['id' => 3, 'student_number' => '2025-0003', 'first_name' => 'Juan',   'last_name' => 'Dela Cruz', 'user' => (object)['email' => 'juan@example.com'],    'latestEnrollment' => (object)['status' => 'rejected']],
-            (object)['id' => 4, 'student_number' => '2025-0004', 'first_name' => 'Ana',    'last_name' => 'Reyes',     'user' => (object)['email' => 'ana@example.com'],     'latestEnrollment' => null],
-        ]);
-        $badgeClass = [
-            'approved' => 'text-bg-success',
-            'pending'  => 'text-bg-warning',
-            'rejected' => 'text-bg-danger',
-        ];
-    @endphp
-
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h4 class="fw-bold mb-0">Students</h4>
         <span class="text-muted small">{{ $students->count() }} total</span>
     </div>
 
-    <div class="card shadow-sm">
-        @if ($students->isEmpty())
-            <div class="card-body text-center text-muted">No students found.</div>
-        @else
-            <div class="table-responsive">
-                <table class="table table-hover mb-0">
-                    <thead class="table-light">
-                        <tr>
-                            <th>Student No.</th>
-                            <th>Name</th>
-                            <th>Email</th>
-                            <th class="text-center">Enrollment</th>
-                            <th class="text-end">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach ($students as $student)
-                            <tr>
-                                <td class="text-muted fw-bold">{{ $student->student_number }}</td>
-                                <td>
-                                    <a href="{{ route('registrar.showStudent', $student->id) }}" class="fw-bold text-decoration-none">
-                                        {{ $student->first_name }} {{ $student->last_name }}
-                                    </a>
-                                </td>
-                                <td class="text-muted">{{ $student->user->email }}</td>
-                                <td class="text-center">
-                                    @if ($student->latestEnrollment)
-                                        <span class="badge {{ $badgeClass[$student->latestEnrollment->status] ?? 'text-bg-secondary' }}">
-                                            {{ ucfirst($student->latestEnrollment->status) }}
-                                        </span>
-                                    @else
-                                        <span class="text-muted small">—</span>
-                                    @endif
-                                </td>
-                                <td class="text-end">
-                                    <a href="{{ route('registrar.showStudent', $student->id) }}"
-                                       class="btn btn-sm btn-outline-secondary">View</a>
-                                    <a href="{{ route('registrar.showSemesterRecord', $student->id) }}"
-                                       class="btn btn-sm btn-outline-primary ms-1">Records</a>
-                                </td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
-        @endif
-    </div>
+    {{-- Search + filters --}}
+    <form method="GET" action="{{ route('registrar.showStudents') }}" class="row g-2 mb-4">
+        <div class="col-md-5">
+            <input type="text" name="search" value="{{ request('search') }}" class="form-control"
+                   placeholder="Search by name or student number">
+        </div>
+        <div class="col-auto">
+            <select name="strand" class="form-select">
+                <option value="">All strands</option>
+                @foreach ($strands as $strand)
+                    <option value="{{ $strand->id }}" {{ request('strand') == $strand->id ? 'selected' : '' }}>{{ $strand->strand_code }}</option>
+                @endforeach
+            </select>
+        </div>
+        <div class="col-auto">
+            <select name="grade" class="form-select">
+                <option value="">All grades</option>
+                <option value="11" {{ request('grade') == '11' ? 'selected' : '' }}>Grade 11</option>
+                <option value="12" {{ request('grade') == '12' ? 'selected' : '' }}>Grade 12</option>
+            </select>
+        </div>
+        <div class="col-auto">
+            <button type="submit" class="btn btn-primary">Filter</button>
+            @if (request()->hasAny(['search', 'strand', 'grade']))
+                <a href="{{ route('registrar.showStudents') }}" class="btn btn-outline-secondary">Clear</a>
+            @endif
+        </div>
+    </form>
+
+    @if ($students->isEmpty())
+        <div class="card shadow-sm"><div class="card-body text-center text-muted">No students found.</div></div>
+    @else
+        {{-- Folder-style grouping: Grade level → Strand --}}
+        @foreach ($grouped as $gradeLabel => $byStrand)
+            <h6 class="fw-bold text-uppercase text-muted mt-4 mb-2">
+                <i class="bi bi-folder2-open me-1"></i> {{ $gradeLabel }}
+            </h6>
+            @foreach ($byStrand as $strandCode => $group)
+                <div class="card shadow-sm mb-3">
+                    <div class="card-header d-flex justify-content-between align-items-center py-2">
+                        <span class="fw-bold">{{ $strandCode }}</span>
+                        <span class="badge text-bg-secondary">{{ $group->count() }}</span>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Student No.</th>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th class="text-end">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach ($group as $student)
+                                    <tr>
+                                        <td class="text-muted fw-bold">{{ $student->student_number }}</td>
+                                        <td>
+                                            <a href="{{ route('registrar.showStudent', $student->id) }}" class="text-decoration-none fw-semibold">
+                                                {{ $student->last_name }}, {{ $student->first_name }}
+                                            </a>
+                                        </td>
+                                        <td class="text-muted">{{ $student->user->email ?? '—' }}</td>
+                                        <td class="text-end">
+                                            <a href="{{ route('registrar.showStudent', $student->id) }}" class="btn btn-sm btn-outline-secondary">View</a>
+                                            <a href="{{ route('registrar.showSemesterRecord', $student->id) }}" class="btn btn-sm btn-outline-primary ms-1">Records</a>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            @endforeach
+        @endforeach
+    @endif
 
 @endsection

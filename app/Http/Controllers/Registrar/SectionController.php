@@ -3,65 +3,121 @@
 namespace App\Http\Controllers\Registrar;
 
 use App\Http\Controllers\Controller;
+use App\Models\AuditLog;
+use App\Models\SchoolYear;
+use App\Models\Section;
+use App\Models\Strand;
+use App\Models\Subject;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class SectionController extends Controller
 {
-    // List all sections — grouped or filtered by semester
+    // List sections grouped by grade level → strand.
     public function showSections(Request $request)
     {
-        // TODO: $sections = \App\Models\Section::with('semester')->paginate(20);
-        // return view('registrar.sections.index', compact('sections'));
-        return view('registrar.sections.index'); // TEMP: remove once real data is wired up
+        $sections = Section::with(['strand', 'schoolYear'])
+            ->withCount(['enrollments as approved_count' => fn ($q) => $q->where('status', 'approved')])
+            ->orderBy('grade_level')
+            ->orderBy('section_name')
+            ->get();
+
+        $grouped = $sections->groupBy([
+            fn ($s) => 'Grade '.$s->grade_level,
+            fn ($s) => $s->strand?->strand_code ?? 'Unassigned',
+        ]);
+
+        return view('registrar.sections.index', compact('sections', 'grouped'));
     }
 
-    // Show form to create a new section
     public function showCreateSection()
     {
-        // TODO: $semesters = \App\Models\Semester::all();
-        // return view('registrar.sections.form', compact('semesters'));
-        return view('registrar.sections.form'); // TEMP: remove once real data is wired up
+        return view('registrar.sections.form', [
+            'section'    => null,
+            'strands'    => Strand::orderBy('strand_code')->get(),
+            'schoolYears' => SchoolYear::orderByDesc('year_label')->get(),
+            'allSubjects' => Subject::orderBy('subject_code')->get(),
+        ]);
     }
 
-    // Save new section to database
     public function postCreateSection(Request $request)
     {
-        // TODO: validate $request (semester_id, section_name, year_level required)
-        // TODO: \App\Models\Section::create($request->validated());
-        // redirect to sections index with success message
+        $validated = $this->validateSection($request);
+
+        DB::transaction(function () use ($validated, $request) {
+            $section = Section::create($validated);
+            $section->subjects()->sync($request->input('subject_ids', []));
+            AuditLog::record('created_section', 'Section', $section->id, 'Created section '.$section->section_name);
+        });
+
+        return redirect()->route('registrar.sections.showSections')
+            ->with('success', 'Section created.');
     }
 
-    // Show a single section detail
     public function showSection(Request $request, $section)
     {
-        // TODO: $section = \App\Models\Section::with('semester')->findOrFail($section);
-        // return view('registrar.sections.show', compact('section'));
-        return redirect()->route('registrar.sections.showEditSection', $section); // no separate show view
+        // No dedicated show view — editing covers detail + subject assignment.
+        return redirect()->route('registrar.sections.showEditSection', $section);
     }
 
-    // Show form to edit existing section
     public function showEditSection(Request $request, $section)
     {
-        // TODO: $section = \App\Models\Section::findOrFail($section);
-        // TODO: $semesters = \App\Models\Semester::all();
-        // return view('registrar.sections.form', compact('section', 'semesters'));
-        return view('registrar.sections.form'); // TEMP: remove once real data is wired up
+        $section = Section::with('subjects')->findOrFail($section);
+
+        return view('registrar.sections.form', [
+            'section'     => $section,
+            'strands'     => Strand::orderBy('strand_code')->get(),
+            'schoolYears' => SchoolYear::orderByDesc('year_label')->get(),
+            'allSubjects' => Subject::orderBy('subject_code')->get(),
+        ]);
     }
 
-    // Update existing section
     public function updateSection(Request $request, $section)
     {
-        // TODO: $section = \App\Models\Section::findOrFail($section);
-        // TODO: validate + $section->update($request->validated());
-        // redirect to sections index with success message
+        $section = Section::findOrFail($section);
+        $validated = $this->validateSection($request, $section->id);
+
+        DB::transaction(function () use ($section, $validated, $request) {
+            $section->update($validated);
+            $section->subjects()->sync($request->input('subject_ids', []));
+            AuditLog::record('updated_section', 'Section', $section->id, 'Updated section '.$section->section_name);
+        });
+
+        return redirect()->route('registrar.sections.showSections')
+            ->with('success', 'Section updated.');
     }
 
-    // Delete a section (only if no enrollments reference it)
     public function deleteSection(Request $request, $section)
     {
-        // TODO: $section = \App\Models\Section::findOrFail($section);
-        // TODO: check no enrollments reference this section before deleting
-        // TODO: $section->delete();
-        // redirect to sections index with success message
+        $section = Section::findOrFail($section);
+
+        if ($section->enrollments()->exists()) {
+            return back()->with('error', 'Cannot delete — students are enrolled in this section.');
+        }
+
+        $name = $section->section_name;
+        $section->subjects()->detach();
+        $section->delete();
+
+        AuditLog::record('deleted_section', 'Section', null, 'Deleted section '.$name);
+
+        return redirect()->route('registrar.sections.showSections')
+            ->with('success', 'Section deleted.');
+    }
+
+    /** Shared validation for create/update. */
+    private function validateSection(Request $request, ?int $ignoreId = null): array
+    {
+        return $request->validate([
+            'strand_id'      => ['required', 'exists:strands,id'],
+            'school_year_id' => ['required', 'exists:school_years,id'],
+            'grade_level'    => ['required', 'in:11,12'],
+            'semester'       => ['required', 'in:1st,2nd'],
+            'section_name'   => ['required', 'string', 'max:50'],
+            'time_period'    => ['required', 'in:AM,PM'],
+            'max_capacity'   => ['required', 'integer', 'min:1', 'max:100'],
+            'subject_ids'    => ['array'],
+            'subject_ids.*'  => ['exists:subjects,id'],
+        ]);
     }
 }

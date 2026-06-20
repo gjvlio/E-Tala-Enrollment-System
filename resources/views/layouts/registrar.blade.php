@@ -45,6 +45,10 @@
                    class="nav-link rounded px-3 py-2 {{ request()->routeIs('registrar.showDashboard') ? 'bg-dark text-white' : 'text-dark' }}">
                     Dashboard
                 </a>
+                <a href="{{ route('registrar.semester.index') }}"
+                   class="nav-link rounded px-3 py-2 {{ request()->routeIs('registrar.semester.*') ? 'bg-dark text-white' : 'text-dark' }}">
+                    Semesters
+                </a>
                 <a href="{{ route('registrar.showEnrollments') }}"
                    class="nav-link rounded px-3 py-2 {{ request()->routeIs('registrar.showEnrollments') || request()->routeIs('registrar.showEnrollment') ? 'bg-dark text-white' : 'text-dark' }}">
                     Enrollments

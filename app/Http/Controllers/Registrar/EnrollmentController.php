@@ -3,43 +3,179 @@
 namespace App\Http\Controllers\Registrar;
 
 use App\Http\Controllers\Controller;
+use App\Models\AuditLog;
+use App\Models\Enrollment;
+use App\Models\SchoolYear;
+use App\Models\Section;
+use App\Models\Strand;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class EnrollmentController extends Controller
 {
-    // List all enrollments — filterable by status (pending/approved/rejected)
+    // List enrollments — filterable by status / strand / grade / section.
     public function showEnrollments(Request $request)
     {
-        // TODO: $enrollments = \App\Models\Enrollment::with(['student', 'semester', 'section'])
-        //           ->when($request->status, fn($q) => $q->where('status', $request->status))
-        //           ->latest()->paginate(20);
-        // return view('registrar.enrollments.index', compact('enrollments'));
-        return view('registrar.enrollments.index'); // TEMP: Matan added this to preview UI
+        $schoolYear = SchoolYear::active();
+
+        $enrollments = Enrollment::query()
+            ->with(['student', 'section.strand'])
+            ->when($schoolYear, fn ($q) => $q->whereHas('section', fn ($s) => $s->where('school_year_id', $schoolYear->id)))
+            ->when($request->status, fn ($q) => $q->where('status', $request->status))
+            ->when($request->strand, fn ($q) => $q->whereHas('section', fn ($s) => $s->where('strand_id', $request->strand)))
+            ->when($request->grade, fn ($q) => $q->whereHas('section', fn ($s) => $s->where('grade_level', $request->grade)))
+            ->when($request->section, fn ($q) => $q->where('section_id', $request->section))
+            ->latest('submitted_at')
+            ->paginate(15)
+            ->withQueryString();
+
+        $strands = Strand::orderBy('strand_code')->get();
+
+        $sections = Section::with('strand')
+            ->when($schoolYear, fn ($q) => $q->where('school_year_id', $schoolYear->id))
+            ->orderBy('grade_level')
+            ->orderBy('section_name')
+            ->get();
+
+        return view('registrar.enrollments.index', compact('enrollments', 'strands', 'sections', 'schoolYear'));
     }
 
-    // Show a single enrollment with student info and enrolled subjects
+    // Single enrollment with student info and enrolled subjects.
     public function showEnrollment(Request $request, $enrollment)
     {
-        // TODO: $enrollment = \App\Models\Enrollment::with(['student', 'section', 'subjects'])->findOrFail($enrollment);
-        // return view('registrar.enrollments.show', compact('enrollment'));
-        return view('registrar.enrollments.show'); // TEMP: remove once real data is wired up
+        $enrollment = Enrollment::with([
+            'student.strand', 'student.user', 'section.strand', 'section.schoolYear', 'subjects', 'approver',
+        ])->findOrFail($enrollment);
+
+        return view('registrar.enrollments.show', compact('enrollment'));
     }
 
-    // Approve an enrollment — set status = 'approved', record approver and timestamp
+    // Approve — set status, record approver/time, enforce section capacity.
     public function approveEnrollment(Request $request, $enrollment)
     {
-        // TODO: $enrollment = \App\Models\Enrollment::findOrFail($enrollment);
-        // TODO: $registrar = auth()->user()->registrar;
-        // TODO: $enrollment->update(['status' => 'approved', 'approved_by' => $registrar->id, 'approved_at' => now()]);
-        // redirect back with success message
+        $enrollment = Enrollment::with('section')->findOrFail($enrollment);
+
+        if (! $enrollment->isPending()) {
+            return back()->with('error', 'This enrollment has already been reviewed.');
+        }
+
+        // Hard block when the section is full
+        if ($enrollment->section->isFull()) {
+            return back()->with('error', 'Cannot approve — section "'.$enrollment->section->section_name.'" is full.');
+        }
+
+        $registrar = Auth::user()->registrar;
+
+        $enrollment->update([
+            'status'      => 'approved',
+            'approved_by' => $registrar?->id,
+            'reviewed_at' => now(),
+            'remarks'     => null,
+        ]);
+
+        AuditLog::record('approved_enrollment', 'Enrollment', $enrollment->id,
+            'Approved enrollment #'.$enrollment->id);
+
+        return back()->with('success', 'Enrollment approved.');
     }
 
-    // Reject an enrollment — set status = 'rejected', record approver and timestamp
+    // Reject — set status, save remarks, log it.
     public function rejectEnrollment(Request $request, $enrollment)
     {
-        // TODO: $enrollment = \App\Models\Enrollment::findOrFail($enrollment);
-        // TODO: $registrar = auth()->user()->registrar;
-        // TODO: $enrollment->update(['status' => 'rejected', 'approved_by' => $registrar->id, 'approved_at' => now()]);
-        // redirect back with success message
+        $enrollment = Enrollment::findOrFail($enrollment);
+
+        if (! $enrollment->isPending()) {
+            return back()->with('error', 'This enrollment has already been reviewed.');
+        }
+
+        $validated = $request->validate([
+            'remarks' => ['nullable', 'string', 'max:500'],
+        ]);
+
+        $registrar = Auth::user()->registrar;
+
+        $enrollment->update([
+            'status'      => 'rejected',
+            'approved_by' => $registrar?->id,
+            'reviewed_at' => now(),
+            'remarks'     => $validated['remarks'] ?? 'Enrollment rejected.',
+        ]);
+
+        AuditLog::record('rejected_enrollment', 'Enrollment', $enrollment->id,
+            'Rejected enrollment #'.$enrollment->id);
+
+        return back()->with('success', 'Enrollment rejected.');
+    }
+
+    // Revert a rejected enrollment back to pending. Requires a valid reason
+    // (e.g. "student submitted Form 138"). Reopens the application for review.
+    public function revertEnrollment(Request $request, $enrollment)
+    {
+        $enrollment = Enrollment::findOrFail($enrollment);
+
+        if ($enrollment->status !== 'rejected') {
+            return back()->with('error', 'Only rejected enrollments can be reverted.');
+        }
+
+        $validated = $request->validate([
+            'revert_reason' => ['required', 'string', 'min:5', 'max:500'],
+        ]);
+
+        $enrollment->update([
+            'status'      => 'pending',
+            'approved_by' => null,
+            'reviewed_at' => null,
+            'remarks'     => 'Reopened by registrar: '.$validated['revert_reason'],
+        ]);
+
+        AuditLog::record('reverted_enrollment', 'Enrollment', $enrollment->id,
+            'Reverted enrollment #'.$enrollment->id.' to pending — '.$validated['revert_reason']);
+
+        return back()->with('success', 'Enrollment reopened and set back to pending.');
+    }
+
+    // Batch approve all selected pending enrollments (skips full sections).
+    public function batchApprove(Request $request)
+    {
+        $validated = $request->validate([
+            'enrollment_ids'   => ['required', 'array'],
+            'enrollment_ids.*' => ['integer', 'exists:enrollments,id'],
+        ]);
+
+        $registrar = Auth::user()->registrar;
+        $approved = 0;
+        $skipped  = 0;
+
+        DB::transaction(function () use ($validated, $registrar, &$approved, &$skipped) {
+            $enrollments = Enrollment::with('section')
+                ->whereIn('id', $validated['enrollment_ids'])
+                ->where('status', 'pending')
+                ->get();
+
+            foreach ($enrollments as $enrollment) {
+                if ($enrollment->section->isFull()) {
+                    $skipped++;
+                    continue;
+                }
+
+                $enrollment->update([
+                    'status'      => 'approved',
+                    'approved_by' => $registrar?->id,
+                    'reviewed_at' => now(),
+                ]);
+                $approved++;
+            }
+
+            AuditLog::record('batch_approved_enrollments', 'Enrollment', null,
+                "Batch approved {$approved} enrollment(s)");
+        });
+
+        $msg = "Approved {$approved} enrollment(s).";
+        if ($skipped) {
+            $msg .= " Skipped {$skipped} (section full).";
+        }
+
+        return back()->with('success', $msg);
     }
 }

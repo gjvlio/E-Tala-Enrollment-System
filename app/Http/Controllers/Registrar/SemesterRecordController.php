@@ -3,27 +3,57 @@
 namespace App\Http\Controllers\Registrar;
 
 use App\Http\Controllers\Controller;
+use App\Models\AuditLog;
+use App\Models\SchoolYear;
+use App\Models\SemesterRecord;
+use App\Models\Student;
 use Illuminate\Http\Request;
 
 class SemesterRecordController extends Controller
 {
-    // Show all semester records for a student (GPA per semester)
+    // Show all semester records (GPA per semester) for a student.
     public function showSemesterRecord(Request $request, $student)
     {
-        // TODO: $student = \App\Models\Student::with('semesterRecords')->findOrFail($student);
-        // return view('registrar.records.show', compact('student'));
-        return view('registrar.records.show'); // TEMP: remove once real data is wired up
+        $student = Student::with(['user', 'semesterRecords.schoolYear'])->findOrFail($student);
+
+        $records = $student->semesterRecords()
+            ->with('schoolYear')
+            ->get()
+            ->sortBy(fn ($r) => $r->schoolYear->year_label.$r->semester)
+            ->values();
+
+        $schoolYears = SchoolYear::orderByDesc('year_label')->get();
+
+        return view('registrar.records.show', compact('student', 'records', 'schoolYears'));
     }
 
-    // Update a student's semester record — set GPA, status, remarks
+    // Manually create/update a single semester record (GPA + lock).
     public function updateSemesterRecord(Request $request, $student)
     {
-        // TODO: validate $request (academic_year, semester, gpa, status, remarks)
-        // TODO: $student = \App\Models\Student::findOrFail($student);
-        // TODO: $student->semesterRecords()->updateOrCreate(
-        //           ['academic_year' => $request->academic_year, 'semester' => $request->semester],
-        //           ['gpa' => $request->gpa, 'status' => $request->status, 'remarks' => $request->remarks]
-        //       );
-        // redirect back with success message
+        $student = Student::findOrFail($student);
+
+        $validated = $request->validate([
+            'school_year_id' => ['required', 'exists:school_years,id'],
+            'semester'       => ['required', 'in:1st,2nd'],
+            'gpa'            => ['nullable', 'numeric', 'min:1', 'max:5'],
+            'is_locked'      => ['nullable', 'boolean'],
+        ]);
+
+        SemesterRecord::updateOrCreate(
+            [
+                'student_id'     => $student->id,
+                'school_year_id' => $validated['school_year_id'],
+                'semester'       => $validated['semester'],
+            ],
+            [
+                'gpa'       => $validated['gpa'] ?? null,
+                'is_locked' => (bool) ($validated['is_locked'] ?? false),
+            ]
+        );
+
+        AuditLog::record('updated_semester_record', 'Student', $student->id,
+            'Updated semester record for student #'.$student->id);
+
+        return back()->with('success', 'Semester record saved.');
     }
 }
