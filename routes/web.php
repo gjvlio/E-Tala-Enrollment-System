@@ -7,17 +7,20 @@ use App\Http\Controllers\Student\DashboardController as StudentDashboard;
 use App\Http\Controllers\Student\EnrollmentController as StudentEnrollment;
 use App\Http\Controllers\Student\SubjectController as StudentSubject;
 use App\Http\Controllers\Student\RecordController as StudentRecord;
+use App\Http\Controllers\Student\SectionController as StudentSection;
 use App\Http\Controllers\Registrar\DashboardController as RegistrarDashboard;
 use App\Http\Controllers\Registrar\EnrollmentController as RegistrarEnrollment;
 use App\Http\Controllers\Registrar\StudentController as RegistrarStudent;
 use App\Http\Controllers\Registrar\SectionController as RegistrarSection;
 use App\Http\Controllers\Registrar\SubjectController as RegistrarSubject;
+use App\Http\Controllers\Registrar\SemesterController as RegistrarSemester;
 use App\Http\Controllers\Registrar\SemesterRecordController as RegistrarSemesterRecord;
+use App\Http\Controllers\Registrar\GradeController as RegistrarGrade;
 use Illuminate\Support\Facades\Route;
 
 
-// Landing
-Route::get('/', [TestController::class, 'startPage']);
+// Landing / role selection
+Route::get('/', [TestController::class, 'startPage'])->name('landing');
 
 // Breeze profile routes
 Route::middleware('auth')->group(function () {
@@ -30,29 +33,44 @@ Route::middleware('auth')->group(function () {
 Route::get('/two-factor-challenge', [TwoFactorController::class, 'showChallenge'])->name('two-factor.showChallenge');
 Route::post('/two-factor-challenge', [TwoFactorController::class, 'postChallenge'])->name('two-factor.postChallenge');
 
-// Student Routes
-// TODO: restore middleware when auth is ready: ['auth', 'role:student']
-Route::group(['prefix' => 'student', 'as' => 'student.', 'middleware' => []], function () {
+// Student Routes — must be authenticated and role=student
+Route::group(['prefix' => 'student', 'as' => 'student.', 'middleware' => ['auth', 'role:student']], function () {
     Route::get('/dashboard', [StudentDashboard::class, 'showDashboard'])->name('showDashboard');
 
     Route::get('/enroll', [StudentEnrollment::class, 'showEnrollForm'])->name('showEnrollForm');
     Route::post('/enroll', [StudentEnrollment::class, 'postEnrollForm'])->name('postEnrollForm');
     Route::get('/enrollment/status', [StudentEnrollment::class, 'showEnrollStatus'])->name('showEnrollStatus');
 
+    Route::get('/section', [StudentSection::class, 'showSection'])->name('showSection');
     Route::get('/subjects', [StudentSubject::class, 'showSubjects'])->name('showSubjects');
     Route::get('/records', [StudentRecord::class, 'showRecords'])->name('showRecords');
 });
 
-// Registrar Routes
-// TODO: restore middleware when auth is ready: ['auth', 'role:registrar']
-Route::group(['prefix' => 'registrar', 'as' => 'registrar.', 'middleware' => []], function () {
+// Registrar Routes — must be authenticated and role=registrar
+Route::group(['prefix' => 'registrar', 'as' => 'registrar.', 'middleware' => ['auth', 'role:registrar']], function () {
     Route::get('/dashboard', [RegistrarDashboard::class, 'showDashboard'])->name('showDashboard');
+
+    // Semester / school year management
+    Route::group(['prefix' => 'semester', 'as' => 'semester.'], function () {
+        Route::get('/', [RegistrarSemester::class, 'index'])->name('index');
+        Route::post('/', [RegistrarSemester::class, 'store'])->name('store');
+        Route::patch('/{schoolYear}/activate', [RegistrarSemester::class, 'activate'])->name('activate');
+        Route::patch('/{schoolYear}/set-semester', [RegistrarSemester::class, 'setSemester'])->name('setSemester');
+        Route::patch('/{schoolYear}/toggle-enrollment', [RegistrarSemester::class, 'toggleEnrollment'])->name('toggleEnrollment');
+        Route::post('/{schoolYear}/finalize', [RegistrarSemester::class, 'finalize'])->name('finalize');
+    });
 
     // Enrollment management
     Route::get('/enrollments', [RegistrarEnrollment::class, 'showEnrollments'])->name('showEnrollments');
+    Route::post('/enrollments/batch-approve', [RegistrarEnrollment::class, 'batchApprove'])->name('batchApproveEnrollments');
     Route::get('/enrollments/{enrollment}', [RegistrarEnrollment::class, 'showEnrollment'])->name('showEnrollment');
     Route::post('/enrollments/{enrollment}/approve', [RegistrarEnrollment::class, 'approveEnrollment'])->name('approveEnrollment');
     Route::post('/enrollments/{enrollment}/reject', [RegistrarEnrollment::class, 'rejectEnrollment'])->name('rejectEnrollment');
+    Route::post('/enrollments/{enrollment}/revert', [RegistrarEnrollment::class, 'revertEnrollment'])->name('revertEnrollment');
+
+    // Grade encoding
+    Route::get('/enrollments/{enrollment}/grades', [RegistrarGrade::class, 'show'])->name('showGradeForm');
+    Route::put('/enrollments/{enrollment}/grades', [RegistrarGrade::class, 'update'])->name('updateGrades');
 
     // Student records
     Route::get('/students', [RegistrarStudent::class, 'showStudents'])->name('showStudents');
@@ -80,14 +98,14 @@ Route::group(['prefix' => 'registrar', 'as' => 'registrar.', 'middleware' => []]
         Route::delete('/{subject}', [RegistrarSubject::class, 'deleteSubject'])->name('deleteSubject');
     });
 
-    // Semester records
+    // Semester records (per student)
     Route::get('/records/{student}', [RegistrarSemesterRecord::class, 'showSemesterRecord'])->name('showSemesterRecord');
     Route::put('/records/{student}', [RegistrarSemesterRecord::class, 'updateSemesterRecord'])->name('updateSemesterRecord');
 });
 
-// Generic dashboard redirect — used by Breeze's navigation.blade.php
-Route::get('/dashboard', function () {
-    $role = auth()->user()->role;
+// Generic dashboard redirect — role-aware
+Route::get('/dashboard', function (\Illuminate\Http\Request $request) {
+    $role = $request->user()->role;
     if ($role === 'student') {
         return redirect()->route('student.showDashboard');
     } elseif ($role === 'registrar') {
