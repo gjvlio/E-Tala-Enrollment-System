@@ -2,16 +2,33 @@
 @section('title', 'Dashboard')
 @section('content')
 
-    <h2 class="fw-bold mb-1">Welcome, {{ $student->first_name ?? auth()->user()?->name ?? 'Student' }}!</h2>
-    <p class="text-muted mb-4">Student No: {{ $student->student_number ?? '—' }}</p>
+    <h2 class="fw-bold mb-1">Welcome, {{ $student->first_name ?? auth()->user()->name }}!</h2>
+    <p class="text-muted mb-4">
+        Student No: {{ $student->student_number ?? '—' }}
+        @if ($student?->strand)
+            &middot; {{ $student->strand->strand_code }} &middot; Grade {{ $student->grade_level }}
+        @endif
+    </p>
 
-    @if ($semester)
-        <div class="alert alert-primary d-flex align-items-center gap-3 mb-4">
+    @if (session('success'))
+        <div class="alert alert-success">{{ session('success') }}</div>
+    @endif
+
+    @if ($schoolYear)
+        <div class="alert {{ $schoolYear->is_enrollment_open ? 'alert-primary' : 'alert-secondary' }} d-flex align-items-center gap-3 mb-4">
             <i class="bi bi-calendar3 fs-4"></i>
-            <span class="fw-semibold">Active Semester: {{ $semester->semester }} — S.Y. {{ $semester->school_year }}</span>
+            <div>
+                <span class="fw-semibold">S.Y. {{ $schoolYear->year_label }} &middot; {{ $schoolYear->active_semester }} Semester</span>
+                &middot;
+                @if ($schoolYear->is_enrollment_open)
+                    <span class="text-success fw-semibold">Enrollment is OPEN</span>
+                @else
+                    <span class="text-muted">Enrollment is closed</span>
+                @endif
+            </div>
         </div>
     @else
-        <div class="alert alert-warning mb-4">No active semester at the moment. Please check back later.</div>
+        <div class="alert alert-warning mb-4">No active school year set. Please check back later.</div>
     @endif
 
     <div class="row g-3 mb-4">
@@ -38,15 +55,15 @@
             <div class="card h-100">
                 <div class="card-body">
                     <p class="small text-muted text-uppercase fw-bold mb-3">Section</p>
-                    <p class="h4 fw-bold mb-0">{{ $enrollment->section->section_name ?? '—' }}</p>
+                    <p class="h5 fw-bold mb-0">{{ $enrollment->section->section_name ?? '—' }}</p>
                 </div>
             </div>
         </div>
         <div class="col-md-4">
             <div class="card h-100">
                 <div class="card-body">
-                    <p class="small text-muted text-uppercase fw-bold mb-3">Year Level</p>
-                    <p class="h4 fw-bold mb-0">{{ $enrollment->section->year_level ?? '—' }}</p>
+                    <p class="small text-muted text-uppercase fw-bold mb-3">Grade Level</p>
+                    <p class="h5 fw-bold mb-0">{{ $enrollment->section->grade_level ?? $student->grade_level ?? '—' }}</p>
                 </div>
             </div>
         </div>

@@ -53,6 +53,10 @@
                    class="nav-link rounded px-3 py-2 {{ request()->routeIs('student.showEnrollStatus') ? 'bg-primary text-white' : 'text-dark' }}">
                     Enrollment Status
                 </a>
+                <a href="{{ route('student.showSection') }}"
+                   class="nav-link rounded px-3 py-2 {{ request()->routeIs('student.showSection') ? 'bg-primary text-white' : 'text-dark' }}">
+                    My Section
+                </a>
                 <a href="{{ route('student.showSubjects') }}"
                    class="nav-link rounded px-3 py-2 {{ request()->routeIs('student.showSubjects') ? 'bg-primary text-white' : 'text-dark' }}">
                     My Subjects

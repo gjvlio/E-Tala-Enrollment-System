@@ -1,106 +1,121 @@
 @extends('layouts.student')
-@section('title', 'Online Enrollment Form')
+@section('title', 'Online Enrollment')
 @section('content')
 
-    {{--
-        DUMMY DATA NOTICE:
-        $gradeLevels, $strands, and $schoolYears below are hardcoded so this page
-        works standalone before the backend wires up real data. Once
-        Student\EnrollmentController@showEnrollForm passes real data, replace
-        this block with values from $gradeLevels / $strands / $schoolYears
-        passed from the controller.
-    --}}
-    @php
-        $gradeLevels = $gradeLevels ?? ['Grade 7', 'Grade 8', 'Grade 9', 'Grade 10', 'Grade 11', 'Grade 12'];
-        $strands     = $strands ?? ['STEM', 'ABM', 'HUMSS', 'GAS', 'TVL'];
-        $schoolYears = $schoolYears ?? ['2025-2026', '2026-2027'];
-    @endphp
+    <h4 class="fw-bold mb-4">Online Enrollment</h4>
 
-    <h4 class="fw-bold mb-4">Online Enrollment Form</h4>
-
+    @if (session('error'))
+        <div class="alert alert-danger">{{ session('error') }}</div>
+    @endif
     @if ($errors->any())
         @foreach ($errors->all() as $error)
             <div class="alert alert-danger">{{ $error }}</div>
         @endforeach
     @endif
 
-    <div class="card shadow-sm">
-        <div class="card-body">
+    {{-- Gate: enrollment closed --}}
+    @if ($blocked === 'closed')
+        <div class="card shadow-sm">
+            <div class="card-body text-center py-5">
+                <i class="bi bi-lock-fill text-muted" style="font-size: 2.5rem;"></i>
+                <h5 class="fw-bold mt-3">Enrollment is currently closed</h5>
+                <p class="text-muted mb-0">
+                    @if ($schoolYear)
+                        Enrollment for S.Y. {{ $schoolYear->year_label }} has not been opened by the registrar yet.
+                    @else
+                        There is no active school year at the moment.
+                    @endif
+                </p>
+            </div>
+        </div>
+
+    {{-- Gate: rejected — frozen for this semester --}}
+    @elseif ($blocked === 'rejected')
+        <div class="card shadow-sm border-danger">
+            <div class="card-body py-5">
+                <div class="text-center mb-3">
+                    <i class="bi bi-lock-fill text-danger" style="font-size: 2.5rem;"></i>
+                    <h5 class="fw-bold mt-3 text-danger">Application Frozen</h5>
+                </div>
+                <div class="alert alert-danger">
+                    <strong>Registrar feedback:</strong> {{ $existing->remarks ?? 'No reason given.' }}
+                </div>
+                <p class="text-muted text-center mb-4">
+                    Your enrollment was rejected and is frozen for this semester. Please comply with the
+                    requirements above. You cannot re-apply on your own — the registrar must reopen your
+                    application once you've complied, or you may apply again next semester.
+                </p>
+                <div class="text-center">
+                    <a href="{{ route('student.showEnrollStatus') }}" class="btn btn-outline-danger">View Status</a>
+                </div>
+            </div>
+        </div>
+
+    {{-- Gate: already enrolled --}}
+    @elseif ($blocked === 'enrolled')
+        <div class="card shadow-sm">
+            <div class="card-body text-center py-5">
+                <i class="bi bi-check-circle-fill text-success" style="font-size: 2.5rem;"></i>
+                <h5 class="fw-bold mt-3">You're already enrolled this semester</h5>
+                <p class="text-muted">
+                    Your enrollment is currently
+                    <span class="fw-semibold">{{ ucfirst($existing->status) }}</span>.
+                </p>
+                <a href="{{ route('student.showEnrollStatus') }}" class="btn btn-primary">View Status</a>
+            </div>
+        </div>
+
+    {{-- Section picker --}}
+    @else
+        <div class="alert alert-info d-flex align-items-center gap-2">
+            <i class="bi bi-info-circle"></i>
+            <span>
+                Showing sections for <strong>{{ $student->strand?->strand_code }}</strong>,
+                <strong>Grade {{ $student->grade_level }}</strong>,
+                S.Y. {{ $schoolYear->year_label }} &middot; {{ $schoolYear->active_semester }} Semester.
+                Subjects are fixed per section — picking a section enrolls you in all its subjects.
+            </span>
+        </div>
+
+        @if ($sections->isEmpty())
+            <div class="card shadow-sm">
+                <div class="card-body text-center text-muted py-5">
+                    No sections available for your strand and grade level yet.
+                </div>
+            </div>
+        @else
             <form method="POST" action="{{ route('student.postEnrollForm') }}">
                 @csrf
-
-                <h5 class="mb-3">Student Information</h5>
-
                 <div class="row g-3">
-                    <div class="col-md-6">
-                        <label for="first_name" class="form-label">First Name</label>
-                        <input id="first_name" name="first_name" type="text"
-                               class="form-control" value="{{ old('first_name') }}" required autofocus>
-                    </div>
-
-                    <div class="col-md-6">
-                        <label for="last_name" class="form-label">Last Name</label>
-                        <input id="last_name" name="last_name" type="text"
-                               class="form-control" value="{{ old('last_name') }}" required>
-                    </div>
-
-                    <div class="col-md-6">
-                        <label for="birthdate" class="form-label">Birthdate</label>
-                        <input id="birthdate" name="birthdate" type="date"
-                               class="form-control" value="{{ old('birthdate') }}" required>
-                    </div>
-
-                    <div class="col-md-6">
-                        <label for="contact_number" class="form-label">Contact Number</label>
-                        <input id="contact_number" name="contact_number" type="text"
-                               class="form-control" value="{{ old('contact_number') }}" required>
-                    </div>
-
-                    <div class="col-12">
-                        <label for="address" class="form-label">Address</label>
-                        <input id="address" name="address" type="text"
-                               class="form-control" value="{{ old('address') }}" required>
-                    </div>
-                </div>
-
-                <h5 class="mt-4 mb-3">Enrollment Details</h5>
-
-                <div class="row g-3">
-                    <div class="col-md-4">
-                        <label for="grade_level" class="form-label">Grade Level</label>
-                        <select name="grade_level" id="grade_level" class="form-select" required>
-                            <option value="" disabled selected>Select grade level</option>
-                            @foreach ($gradeLevels as $level)
-                                <option value="{{ $level }}" {{ old('grade_level') == $level ? 'selected' : '' }}>
-                                    {{ $level }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-
-                    <div class="col-md-4">
-                        <label for="strand" class="form-label">Strand</label>
-                        <select name="strand" id="strand" class="form-select">
-                            <option value="" selected>N/A</option>
-                            @foreach ($strands as $strand)
-                                <option value="{{ $strand }}" {{ old('strand') == $strand ? 'selected' : '' }}>
-                                    {{ $strand }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-
-                    <div class="col-md-4">
-                        <label for="school_year" class="form-label">School Year</label>
-                        <select name="school_year" id="school_year" class="form-select" required>
-                            <option value="" disabled selected>Select school year</option>
-                            @foreach ($schoolYears as $sy)
-                                <option value="{{ $sy }}" {{ old('school_year') == $sy ? 'selected' : '' }}>
-                                    {{ $sy }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
+                    @foreach ($sections as $section)
+                        <div class="col-md-6">
+                            <label class="card h-100" style="cursor: pointer;">
+                                <div class="card-body">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="section_id"
+                                               value="{{ $section->id }}" id="section{{ $section->id }}"
+                                               {{ old('section_id') == $section->id ? 'checked' : '' }} required>
+                                        <label class="form-check-label fw-bold" for="section{{ $section->id }}">
+                                            {{ $section->section_name }}
+                                            <span class="badge text-bg-light ms-1">{{ $section->time_period }}</span>
+                                        </label>
+                                    </div>
+                                    <p class="text-muted small mt-2 mb-2">
+                                        Capacity: {{ $section->max_capacity }} &middot;
+                                        {{ $section->subjects->count() }} subjects
+                                    </p>
+                                    <details>
+                                        <summary class="small text-primary">View subjects</summary>
+                                        <ul class="small text-muted mt-2 mb-0">
+                                            @foreach ($section->subjects as $subject)
+                                                <li>{{ $subject->subject_code }} — {{ $subject->subject_name }}</li>
+                                            @endforeach
+                                        </ul>
+                                    </details>
+                                </div>
+                            </label>
+                        </div>
+                    @endforeach
                 </div>
 
                 <div class="d-flex justify-content-end gap-3 mt-4">
@@ -108,7 +123,7 @@
                     <button type="submit" class="btn btn-primary">Submit Enrollment</button>
                 </div>
             </form>
-        </div>
-    </div>
+        @endif
+    @endif
 
 @endsection

@@ -4,15 +4,23 @@ namespace App\Http\Controllers\Student;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class RecordController extends Controller
 {
-    // Show all semester records for the authenticated student (GPA history)
+    // Past semester records (GPA history) for the authenticated student.
     public function showRecords(Request $request)
     {
-        // TODO: $student = auth()->user()->student;
-        // TODO: $records = $student->semesterRecords()->orderBy('academic_year')->orderBy('semester')->get();
-        // return view('student.records', compact('records'));
-        return view('student.records'); // TEMP: Matan added this to preview UI, remove once real data is wired up
+        $student = Auth::user()->student;
+
+        $records = $student->semesterRecords()
+            ->with('schoolYear')
+            ->join('school_years', 'school_years.id', '=', 'semester_records.school_year_id')
+            ->orderBy('school_years.year_label')
+            ->orderBy('semester_records.semester')
+            ->select('semester_records.*')
+            ->get();
+
+        return view('student.records', compact('student', 'records'));
     }
 }
