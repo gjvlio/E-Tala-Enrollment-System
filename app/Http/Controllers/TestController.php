@@ -6,16 +6,16 @@ use Illuminate\Http\Request;
 
 class TestController extends Controller
 {
-    public function startPage(){
-        return response("<pre>
-██╗░░██╗███████╗██╗░░░░░██╗░░░░░░█████╗░  ░██╗░░░░░░░██╗░█████╗░██████╗░██╗░░░░░██████╗░██╗
-██║░░██║██╔════╝██║░░░░░██║░░░░░██╔══██╗  ░██║░░██╗░░██║██╔══██╗██╔══██╗██║░░░░░██╔══██╗██║
-███████║█████╗░░██║░░░░░██║░░░░░██║░░██║  ░╚██╗████╗██╔╝██║░░██║██████╔╝██║░░░░░██║░░██║██║
-██╔══██║██╔══╝░░██║░░░░░██║░░░░░██║░░██║  ░░████╔═████║░██║░░██║██╔══██╗██║░░░░░██║░░██║╚═╝
-██║░░██║███████╗███████╗███████╗╚█████╔╝  ░░╚██╔╝░╚██╔╝░╚█████╔╝██║░░██║███████╗██████╔╝██╗
-╚═╝░░╚═╝╚══════╝╚══════╝╚══════╝░╚════╝░  ░░░╚═╝░░░╚═╝░░░╚════╝░╚═╝░░╚═╝╚══════╝╚═════╝░╚═╝
+    // Landing / role selection page.
+    // Logged-in users skip straight to their dashboard.
+    public function startPage(Request $request)
+    {
+        if ($user = $request->user()) {
+            return $user->isRegistrar()
+                ? redirect()->route('registrar.showDashboard')
+                : redirect()->route('student.showDashboard');
+        }
 
-this is the starting page
-</pre>")->header('Content-Type', 'text/html');
+        return view('landing');
     }
 }
