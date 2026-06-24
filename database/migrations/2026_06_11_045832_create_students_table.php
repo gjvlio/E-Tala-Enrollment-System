@@ -17,6 +17,8 @@ return new class extends Migration
             $table->string('phone', 20)->nullable();
             $table->date('birthdate')->nullable();
             $table->text('address')->nullable();
+            $table->foreignId('strand_id')->nullable()->constrained()->onDelete('set null');
+            $table->enum('grade_level', ['11', '12'])->nullable();
             $table->timestamps();
         });
     }

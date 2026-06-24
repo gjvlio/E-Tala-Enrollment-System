@@ -11,12 +11,13 @@ return new class extends Migration
         Schema::create('semester_records', function (Blueprint $table) {
             $table->id();
             $table->foreignId('student_id')->constrained()->onDelete('cascade');
-            $table->string('academic_year');
-            $table->string('semester');
-            $table->decimal('gpa', 3, 2)->nullable();
-            $table->enum('status', ['active', 'completed', 'dropped'])->default('active');
-            $table->text('remarks')->nullable();
+            $table->foreignId('school_year_id')->constrained()->onDelete('restrict');
+            $table->enum('semester', ['1st', '2nd']);
+            $table->decimal('gpa', 4, 2)->nullable();
+            $table->boolean('is_locked')->default(false);
             $table->timestamps();
+
+            $table->unique(['student_id', 'school_year_id', 'semester']);
         });
     }
 

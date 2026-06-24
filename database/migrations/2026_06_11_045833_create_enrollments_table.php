@@ -11,11 +11,12 @@ return new class extends Migration
         Schema::create('enrollments', function (Blueprint $table) {
             $table->id();
             $table->foreignId('student_id')->constrained()->onDelete('restrict');
-            $table->foreignId('semester_id')->constrained()->onDelete('restrict');
             $table->foreignId('section_id')->constrained()->onDelete('restrict');
-            $table->enum('status', ['pending', 'approved', 'rejected'])->default('pending');
+            $table->string('status')->default('pending');
+            $table->text('remarks')->nullable();
             $table->foreignId('approved_by')->nullable()->constrained('registrars')->onDelete('set null');
-            $table->timestamp('approved_at')->nullable();
+            $table->timestamp('submitted_at')->useCurrent();
+            $table->timestamp('reviewed_at')->nullable();
             $table->timestamps();
         });
     }

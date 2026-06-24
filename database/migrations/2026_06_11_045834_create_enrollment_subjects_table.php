@@ -12,7 +12,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('enrollment_id')->constrained()->onDelete('cascade');
             $table->foreignId('subject_id')->constrained()->onDelete('restrict');
-            $table->decimal('grade', 3, 2)->nullable();
+            $table->decimal('grade', 4, 2)->nullable();
             $table->enum('status', ['enrolled', 'passed', 'failed', 'dropped'])->default('enrolled');
             $table->timestamps();
 

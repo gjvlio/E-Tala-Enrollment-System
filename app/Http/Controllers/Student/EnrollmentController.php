@@ -3,34 +3,217 @@
 namespace App\Http\Controllers\Student;
 
 use App\Http\Controllers\Controller;
+use App\Models\Enrollment;
+use App\Models\SchoolYear;
+use App\Models\Section;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class EnrollmentController extends Controller
 {
-    // Show enrollment form — list available sections and subjects for active semester
+    // Show enrollment form — sections matching the student's strand + grade for
+    // the active, open school year, each with its pre-loaded subject list.
     public function showEnrollForm(Request $request)
     {
-        // TODO: $semester = \App\Models\Semester::where('is_active', true)->firstOrFail();
-        // TODO: $sections = \App\Models\Section::where('semester_id', $semester->id)->get();
-        // TODO: $subjects = \App\Models\Subject::all();
-        // return view('student.enroll', compact('semester', 'sections', 'subjects'));
+        $student    = Auth::user()->student;
+        $schoolYear = SchoolYear::active();
+
+        // Gate: enrollment must be open
+        if (! $schoolYear || ! $schoolYear->is_enrollment_open) {
+            return view('student.enroll', [
+                'student'    => $student,
+                'schoolYear' => $schoolYear,
+                'sections'   => collect(),
+                'blocked'    => 'closed',
+            ]);
+        }
+
+        // Gate: block only if there's an active (pending/approved) enrollment.
+        // An "invalid" enrollment is returned-for-compliance — the student may
+        // fix the issue and re-submit, so it does NOT block the form.
+        $existing = $this->activeEnrollment($student, $schoolYear);
+        if ($existing) {
+            return view('student.enroll', [
+                'student'    => $student,
+                'schoolYear' => $schoolYear,
+                'sections'   => collect(),
+                'blocked'    => 'enrolled',
+                'existing'   => $existing,
+            ]);
+        }
+
+        // Surface the registrar's remarks from a previously returned submission.
+        $invalid = $student->enrollments()
+            ->where('status', 'invalid')
+            ->whereHas('section', fn ($s) => $s
+                ->where('school_year_id', $schoolYear->id)
+                ->where('semester', $schoolYear->active_semester))
+            ->latest('submitted_at')
+            ->first();
+
+        $sections = Section::with('subjects')
+            ->withCount(['enrollments as approved_count' => fn ($q) => $q->where('status', 'approved')])
+            ->where('school_year_id', $schoolYear->id)
+            ->where('semester', $schoolYear->active_semester)
+            ->where('strand_id', $student->strand_id)
+            ->where('grade_level', $student->grade_level)
+            ->get()
+            // Hide sections already at capacity — a full section never reaches
+            // the student, so the registrar can't hit a "section full" wall.
+            ->reject(fn ($section) => $section->isFull())
+            ->values();
+
+        return view('student.enroll', [
+            'student'        => $student,
+            'schoolYear'     => $schoolYear,
+            'sections'       => $sections,
+            'blocked'        => null,
+            'invalidRemarks' => $invalid?->remarks,
+        ]);
     }
 
-    // Submit enrollment form — create enrollment + attach selected subjects
+    // Submit enrollment — create a pending enrollment and snapshot the section's
+    // subjects into enrollment_subjects (one-click, no manual subject picking).
     public function postEnrollForm(Request $request)
     {
-        // TODO: validate $request (section_id required, subjects array required)
-        // TODO: check student has no existing enrollment for this semester
-        // TODO: create Enrollment record with status = 'pending'
-        // TODO: attach subjects via enrollment_subjects pivot
-        // redirect to status page on success
+        $student    = Auth::user()->student;
+        $schoolYear = SchoolYear::active();
+
+        if (! $schoolYear || ! $schoolYear->is_enrollment_open) {
+            return redirect()->route('student.showEnrollForm')
+                ->with('error', 'Enrollment is currently closed.');
+        }
+
+        if ($this->activeEnrollment($student, $schoolYear)) {
+            return redirect()->route('student.showEnrollStatus')
+                ->with('error', 'You already have an active enrollment this semester.');
+        }
+
+        $rules = ['section_id' => ['required', 'exists:sections,id']];
+
+        // Grade 12 must submit enrollment requirements (SF9 + 2x2 photo).
+        if ($student->grade_level === '12') {
+            $rules['documents']       = ['required', 'array'];
+            $rules['documents.sf9']   = ['required', 'file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'];
+            $rules['documents.photo'] = ['required', 'file', 'mimes:jpg,jpeg,png', 'max:5120'];
+        }
+
+        $validated = $request->validate($rules);
+
+        $section = Section::with('subjects')->findOrFail($validated['section_id']);
+
+        // Guard: section must match student's strand + grade and the active year/semester
+        if (
+            $section->school_year_id !== $schoolYear->id ||
+            $section->semester !== $schoolYear->active_semester ||
+            $section->strand_id !== $student->strand_id ||
+            $section->grade_level !== $student->grade_level
+        ) {
+            return redirect()->route('student.showEnrollForm')
+                ->with('error', 'That section is not available for your strand and grade level.');
+        }
+
+        // Race guard: the section may have filled between page load and submit.
+        if ($section->isFull()) {
+            return redirect()->route('student.showEnrollForm')
+                ->with('error', 'Sorry, "'.$section->section_name.'" just filled up. Please pick another section.');
+        }
+
+        DB::transaction(function () use ($student, $section, $request) {
+            $enrollment = Enrollment::create([
+                'student_id'   => $student->id,
+                'section_id'   => $section->id,
+                'status'       => 'pending',
+                'submitted_at' => now(),
+            ]);
+
+            // Grade 12: persist the uploaded enrollment requirements.
+            if ($student->grade_level === '12') {
+                foreach (array_keys(\App\Models\EnrollmentDocument::TYPES) as $type) {
+                    if ($file = $request->file("documents.$type")) {
+                        \App\Models\EnrollmentDocument::create([
+                            'enrollment_id' => $enrollment->id,
+                            'type'          => $type,
+                            'path'          => $file->store("enrollments/{$enrollment->id}", 'public'),
+                            'original_name' => $file->getClientOriginalName(),
+                        ]);
+                    }
+                }
+            }
+
+            // Snapshot subjects from section_subjects → enrollment_subjects
+            $rows = $section->subjects->map(fn ($subject) => [
+                'enrollment_id' => $enrollment->id,
+                'subject_id'    => $subject->id,
+                'status'        => 'enrolled',
+                'created_at'    => now(),
+                'updated_at'    => now(),
+            ])->all();
+
+            if ($rows) {
+                DB::table('enrollment_subjects')->insert($rows);
+            }
+        });
+
+        return redirect()->route('student.showEnrollStatus')
+            ->with('success', 'Enrollment submitted! It is now pending registrar approval.');
     }
 
-    // Show current enrollment status for the active semester
+    // Show current enrollment status for the active school year.
     public function showEnrollStatus(Request $request)
     {
-        // TODO: $student = auth()->user()->student;
-        // TODO: $enrollment = $student->enrollments()->with(['section', 'semester', 'subjects'])->latest()->first();
-        // return view('student.status', compact('enrollment'));
+        $student    = Auth::user()->student;
+        $schoolYear = SchoolYear::active();
+
+        $enrollment = $student->enrollments()
+            ->with(['section.strand', 'section.schoolYear', 'subjects', 'approver'])
+            ->when($schoolYear, fn ($q) => $q->whereHas('section', fn ($s) => $s->where('school_year_id', $schoolYear->id)))
+            ->latest('submitted_at')
+            ->first();
+
+        return view('student.status', compact('student', 'schoolYear', 'enrollment'));
+    }
+
+    // Certificate of Registration — printable page. Only available once the
+    // enrollment for the active school year is approved (officially enrolled).
+    public function showCertificate(Request $request)
+    {
+        $student    = Auth::user()->student;
+        $schoolYear = SchoolYear::active();
+
+        $enrollment = $student->enrollments()
+            ->with(['section.strand', 'section.schoolYear', 'section.subjects', 'subjects', 'approver'])
+            ->where('status', 'approved')
+            ->when($schoolYear, fn ($q) => $q->whereHas('section', fn ($s) => $s->where('school_year_id', $schoolYear->id)))
+            ->latest('submitted_at')
+            ->first();
+
+        if (! $enrollment) {
+            return redirect()->route('student.showEnrollStatus')
+                ->with('error', 'A Certificate of Registration is only available once your enrollment is approved.');
+        }
+
+        return view('student.cor', compact('student', 'schoolYear', 'enrollment'));
+    }
+
+    /**
+     * Active enrollment for the student in the current year + semester.
+     * Only pending/approved block the form. An "invalid" (returned) enrollment
+     * does NOT block — the student can comply and re-submit.
+     */
+    private function activeEnrollment($student, ?SchoolYear $schoolYear): ?Enrollment
+    {
+        if (! $student || ! $schoolYear) {
+            return null;
+        }
+
+        return $student->enrollments()
+            ->whereIn('status', ['pending', 'approved'])
+            ->whereHas('section', fn ($s) => $s
+                ->where('school_year_id', $schoolYear->id)
+                ->where('semester', $schoolYear->active_semester))
+            ->latest('submitted_at')
+            ->first();
     }
 }

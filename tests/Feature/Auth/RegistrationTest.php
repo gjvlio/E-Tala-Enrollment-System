@@ -2,7 +2,10 @@
 
 namespace Tests\Feature\Auth;
 
+use App\Models\User;
+use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Notification;
 use Tests\TestCase;
 
 class RegistrationTest extends TestCase
@@ -16,16 +19,27 @@ class RegistrationTest extends TestCase
         $response->assertStatus(200);
     }
 
-    public function test_new_users_can_register(): void
+    public function test_new_applicants_can_register_and_receive_a_verification_email(): void
     {
+        Notification::fake();
+
         $response = $this->post('/register', [
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-            'password' => 'password',
+            'first_name' => 'Test',
+            'last_name'  => 'User',
+            'birthdate'  => '2009-01-01',
+            'email'      => 'test@example.com',
+            'password'   => 'password',
             'password_confirmation' => 'password',
         ]);
 
         $this->assertAuthenticated();
-        $response->assertRedirect(route('dashboard', absolute: false));
+
+        $user = User::where('email', 'test@example.com')->firstOrFail();
+        $this->assertNull($user->email_verified_at);
+        $this->assertNull($user->school_id);          // applicant, not yet admitted
+        $this->assertNull($user->student);            // no student profile at registration
+        Notification::assertSentTo($user, VerifyEmail::class);
+
+        $response->assertRedirect(route('verification.notice'));
     }
 }

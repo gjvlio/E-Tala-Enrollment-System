@@ -6,6 +6,7 @@ use App\Http\Requests\ProfileUpdateRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\View\View;
 
@@ -50,7 +51,14 @@ class ProfileController extends Controller
 
         Auth::logout();
 
-        $user->delete();
+        DB::transaction(function () use ($user) {
+            // enrollments use RESTRICT — clear them first, then deleting the user cascades the rest
+            if ($student = $user->student) {
+                $student->enrollments()->delete();
+            }
+
+            $user->delete();
+        });
 
         $request->session()->invalidate();
         $request->session()->regenerateToken();
