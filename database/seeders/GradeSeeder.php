@@ -36,30 +36,41 @@ class GradeSeeder extends Seeder
                 ->get();
 
             $sectionCache = [];
+            $placed       = [];          // (strand-sem) => students already seated
+            $capacity     = 50;
 
-            // Resolve (or create) a past Grade 11 section for a strand + semester.
-            $sectionFor = function (Student $student, string $sem) use (&$sectionCache, $pastSy, $core, $strandSubs) {
-                $key = $student->strand_id.'-'.$sem;
-                if (isset($sectionCache[$key])) {
-                    return $sectionCache[$key];
+            // Resolve a past Grade 11 section for a strand + semester, rolling over
+            // to a new section once the current one hits capacity — so no class ever
+            // overflows (was cramming all 64 STEM G12 into one 50-seat section).
+            $sectionFor = function (Student $student, string $sem) use (&$sectionCache, &$placed, $capacity, $pastSy, $core, $strandSubs) {
+                $group = $student->strand_id.'-'.$sem;
+                $index = intdiv($placed[$group] ?? 0, $capacity);   // 0, 1, 2 …
+                $key   = $group.'-'.$index;
+
+                if (! isset($sectionCache[$key])) {
+                    $base = $sem === '1st' ? 'Kasipagan' : 'Katapangan';
+                    $name = $index === 0 ? $base : $base.' '.($index + 1);
+
+                    $section = Section::firstOrCreate(
+                        [
+                            'strand_id'      => $student->strand_id,
+                            'school_year_id' => $pastSy->id,
+                            'grade_level'    => '11',
+                            'semester'       => $sem,
+                            'section_name'   => $name,
+                        ],
+                        ['time_period' => 'AM', 'max_capacity' => $capacity],
+                    );
+
+                    $subjects = array_values(array_unique(array_merge($core, $strandSubs(optional($student->strand)->strand_code))));
+                    $section->subjects()->syncWithoutDetaching($subjects);
+
+                    $sectionCache[$key] = ['section' => $section, 'subjects' => $subjects];
                 }
 
-                $name = $sem === '1st' ? 'Kasipagan' : 'Katapangan';
-                $section = Section::firstOrCreate(
-                    [
-                        'strand_id'      => $student->strand_id,
-                        'school_year_id' => $pastSy->id,
-                        'grade_level'    => '11',
-                        'semester'       => $sem,
-                        'section_name'   => $name,
-                    ],
-                    ['time_period' => 'AM', 'max_capacity' => 50],
-                );
+                $placed[$group] = ($placed[$group] ?? 0) + 1;
 
-                $subjects = array_values(array_unique(array_merge($core, $strandSubs(optional($student->strand)->strand_code))));
-                $section->subjects()->syncWithoutDetaching($subjects);
-
-                return $sectionCache[$key] = ['section' => $section, 'subjects' => $subjects];
+                return $sectionCache[$key];
             };
 
             foreach ($g12 as $student) {
