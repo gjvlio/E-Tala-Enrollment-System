@@ -14,10 +14,10 @@
             </nav>
         </div>
         <form method="POST" action="{{ route('registrar.sections.generateSchedule', $section->id) }}"
-              data-confirm="Auto-generate the weekly schedule for this section? This replaces any existing schedule." data-confirm-title="Generate Schedule" data-confirm-ok="Generate">
+              data-confirm="{{ $section->hasSchedule() ? 'Update the weekly schedule for this section? This replaces the existing schedule.' : 'Create the weekly schedule for this section?' }}" data-confirm-title="{{ $section->hasSchedule() ? 'Update Schedule' : 'Create Schedule' }}" data-confirm-ok="{{ $section->hasSchedule() ? 'Update' : 'Create' }}">
             @csrf
-            <button type="submit" class="btn btn-primary d-inline-flex align-items-center gap-1" data-loading-text="Generating…">
-                <i class="bi bi-magic"></i> {{ $section->hasSchedule() ? 'Regenerate' : 'Generate' }} Schedule
+            <button type="submit" class="btn btn-primary d-inline-flex align-items-center gap-1" data-loading-text="Saving…">
+                <i class="bi bi-magic"></i> {{ $section->hasSchedule() ? 'Update' : 'Create' }} Schedule
             </button>
         </form>
     </div>

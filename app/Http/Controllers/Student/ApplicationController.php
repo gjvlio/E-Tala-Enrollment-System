@@ -127,7 +127,7 @@ class ApplicationController extends Controller
             'religion'        => ['nullable', 'string', 'max:100'],
             'ip_community'    => ['nullable', 'string', 'max:255'],
             'disability_type' => ['nullable', 'string', 'max:255'],
-            'household_id'    => ['nullable', 'string', 'max:100'],
+            'household_id'    => ['nullable', 'regex:/^\d+$/', 'max:100'],
             'mobile'          => ['required', 'string', 'max:20'],
             'current_address'  => ['required', 'string', 'max:255'],
             'current_barangay' => ['required', 'string', 'max:100'],
@@ -165,13 +165,10 @@ class ApplicationController extends Controller
             'general_average'           => ['required', 'numeric', 'min:0', 'max:100'],
             'elementary_name'           => ['required', 'string', 'max:255'],
             'elementary_year_graduated' => ['nullable', 'string', 'max:10'],
-            'previous_school'           => ['nullable', 'string', 'max:255'],
             'strand_id'                 => ['required', 'exists:strands,id'],
         ]);
 
-        $data['is_returning']  = $request->boolean('is_returning');
-        $data['is_transferee'] = $request->boolean('is_transferee');
-        $data['grade_level']   = '11';
+        $data['grade_level'] = '11';
 
         $application->update($data);
     }

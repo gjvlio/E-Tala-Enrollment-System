@@ -125,8 +125,8 @@ class SectionController extends Controller
 
         return redirect()->route('registrar.sections.showSchedule', $section->id)
             ->with('success', $count
-                ? "Schedule generated for {$count} subject(s)."
-                : 'Add subjects to this section first, then generate the schedule.');
+                ? "Schedule saved for {$count} subject(s)."
+                : 'Add subjects to this section first, then create the schedule.');
     }
 
     /** Shared validation for create/update. */
