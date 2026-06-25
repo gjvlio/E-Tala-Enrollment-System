@@ -30,8 +30,8 @@ return [
             // ],
         ],
 
-        'resend' => [
-            'transport' => 'resend',
+        'sendgrid' => [
+            'transport' => 'sendgrid',
         ],
 
         'sendmail' => [
