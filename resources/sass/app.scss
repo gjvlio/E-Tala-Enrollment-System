@@ -265,6 +265,14 @@ body.portal-registrar {
             color: #fff !important;
         }
     }
+
+    .modal {
+        z-index: 2000;
+    }
+
+    .modal-backdrop {
+        z-index: 1990;
+    }
 }
 
 /* Student styles */
@@ -326,6 +334,14 @@ body.portal-student {
             color: #fff !important;
         }
     }
+}
+
+.modal {
+    z-index: 2050 !important;
+}
+
+.modal-backdrop {
+    z-index: 2040 !important;
 }
 
 /* Auth / Gateway backgrounds */

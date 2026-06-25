@@ -2,6 +2,12 @@
 @section('title', 'Student Detail')
 @section('content')
 
+    <style>
+        .semester-records-card:hover .semester-records-card__subtitle {
+            color: inherit !important;
+        }
+    </style>
+
     {{-- Page Header --}}
     <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-4 pb-2 border-bottom">
         <div class="d-flex align-items-center gap-3">
@@ -58,10 +64,10 @@
                     <span>Actions</span>
                 </div>
                 <div class="card-body pt-0 d-flex flex-column gap-2">
-                    <a href="{{ route('registrar.showSemesterRecord', $student->id) }}" class="btn btn-outline-primary d-flex align-items-center justify-content-between p-3 rounded-3 text-start">
+                    <a href="{{ route('registrar.showSemesterRecord', $student->id) }}" class="btn btn-outl`ine-primary semester-records-card d-flex align-items-center justify-content-between p`-3 rounded-3 text-start">
                         <div>
                             <div class="fw-bold"><i class="bi bi-bar-chart-line me-1"></i> Semester Records</div>
-                            <div class="small text-muted" style="font-size:0.75rem;">View and manage GPA and locks</div>
+                            <div class="small text-muted semester-records-card__subtitle" style="font-size:0.75rem;">View and manage GPA and locks</div>
                         </div>
                         <i class="bi bi-chevron-right text-muted"></i>
                     </a>

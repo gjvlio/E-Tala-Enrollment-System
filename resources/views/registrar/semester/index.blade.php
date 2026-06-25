@@ -170,40 +170,6 @@
                                         <i class="bi bi-clipboard-check"></i> Finalize
                                     </button>
                                 </div>
-
-                                {{-- Finalize modal --}}
-                                <div class="modal fade text-start" id="finalize{{ $sy->id }}" tabindex="-1" aria-hidden="true">
-                                    <div class="modal-dialog">
-                                        <form method="POST" action="{{ route('registrar.semester.finalize', $sy->id) }}" class="modal-content border-0 shadow-lg">
-                                            @csrf
-                                            <div class="modal-header bg-dark text-white border-0 py-3">
-                                                <h5 class="modal-title fw-bold d-flex align-items-center gap-2">
-                                                    <i class="bi bi-clipboard-check-fill"></i> Finalize {{ $sy->year_label }}
-                                                </h5>
-                                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                                            </div>
-                                            <div class="modal-body p-4">
-                                                <div class="alert alert-warning border-0 d-flex gap-2">
-                                                    <i class="bi bi-exclamation-triangle-fill fs-5 text-warning"></i>
-                                                    <div>
-                                                        <strong>Warning:</strong> This process will calculate the final GPAs for all students and lock their records for the selected semester.
-                                                    </div>
-                                                </div>
-                                                <div class="mb-3">
-                                                    <label for="semester{{ $sy->id }}" class="form-label fw-semibold small text-muted">Select Semester to Finalize</label>
-                                                    <select name="semester" id="semester{{ $sy->id }}" class="form-select" required>
-                                                        <option value="1st">1st Semester</option>
-                                                        <option value="2nd">2nd Semester</option>
-                                                    </select>
-                                                </div>
-                                            </div>
-                                            <div class="modal-footer border-top-0 pt-0">
-                                                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                                                <button type="submit" class="btn btn-dark">Finalize &amp; Lock</button>
-                                            </div>
-                                        </form>
-                                    </div>
-                                </div>
                             </td>
                         </tr>
                     @endforeach
@@ -211,5 +177,43 @@
             </table>
         </div>
     </div>
+
+    @push('modals')
+        {{-- Finalize modals (rendered at the layout root to avoid stacking-context issues) --}}
+        @foreach ($schoolYears as $sy)
+            <div class="modal fade text-start" id="finalize{{ $sy->id }}" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog">
+                    <form method="POST" action="{{ route('registrar.semester.finalize', $sy->id) }}" class="modal-content border-0 shadow-lg">
+                        @csrf
+                        <div class="modal-header bg-dark text-white border-0 py-3">
+                            <h5 class="modal-title fw-bold d-flex align-items-center gap-2">
+                                <i class="bi bi-clipboard-check-fill"></i> Finalize {{ $sy->year_label }}
+                            </h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body p-4">
+                            <div class="alert alert-warning border-0 d-flex gap-2">
+                                <i class="bi bi-exclamation-triangle-fill fs-5 text-warning"></i>
+                                <div>
+                                    <strong>Warning:</strong> This process will calculate the final GPAs for all students and lock their records for the selected semester.
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="semester{{ $sy->id }}" class="form-label fw-semibold small text-muted">Select Semester to Finalize</label>
+                                <select name="semester" id="semester{{ $sy->id }}" class="form-select" required>
+                                    <option value="1st">1st Semester</option>
+                                    <option value="2nd">2nd Semester</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="modal-footer border-top-0 pt-0">
+                            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-dark">Finalize &amp; Lock</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        @endforeach
+    @endpush
 
 @endsection
