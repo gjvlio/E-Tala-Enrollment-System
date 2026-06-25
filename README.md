@@ -20,14 +20,12 @@ A web-based Senior High School (Grade 11–12, strand-based) enrollment system b
 
 ---
 
-## Group Members & Responsibilities
+## Requirements
 
-| Member | Role | Primary Deliverables |
-|---|---|---|
-| **Member A** | Project Lead / Back-end Core | Scaffolding, subject enrollment, middleware, deployment |
-| **Member B** | Database & Back-end Support | ERD, migrations, seeders, section CRUD, admin dashboard |
-| **Member C** | Auth & Flow Logic | Breeze auth, approval/rejection flow, UI polish |
-| **Member D** | Front-end & Documentation | Enrollment form, student records view, README & submission docs |
+- PHP 8.3+
+- Composer
+- MySQL 8.x
+- Node.js 18+ and npm (only if changing frontend assets)
 
 ---
 
@@ -50,7 +48,7 @@ Admission and enrollment are two separate phases:
 ```
 Landing (/) → choose role
 
-Applicant (new)
+Applicant
   register (name, birthday, email, password) → verify email
   → application wizard: Personal → Education → Documents → Review → submit (pending)
   → registrar reviews:
@@ -81,55 +79,6 @@ Key rules:
 - **No manual subject picking** — choosing a section enrolls the student in all its subjects
   (snapshot copied to `enrollment_subjects`).
 - **Grades are 100-point** — 60 lowest, 75 passing, 90+ high.
-
----
-
-## Requirements
-
-- PHP 8.3+
-- Composer
-- MySQL 8.x
-- Node.js 18+ and npm (only if changing frontend assets)
-
----
-
-## Local Setup
-
-> On Windows, use PowerShell.
-
-```powershell
-# 1. Clone the repo
-git clone https://github.com/gjvlio/E-Tala-Enrollment-System.git
-cd E-Tala-Enrollment-System
-
-# 2. Install PHP dependencies
-composer install
-
-# 3. Copy environment file
-copy .env.example .env
-php artisan key:generate
-
-# 4. Create MySQL database
-# CREATE DATABASE school_enrollment_db;
-
-# 5. Set DB credentials in .env (DB_DATABASE, DB_USERNAME, DB_PASSWORD)
-
-# 6. Run migrations + seed sample data
-php artisan migrate:fresh --seed
-
-# 7. Start the server
-php artisan serve
-```
-
-App runs at: `http://localhost:8000`
-
-> **No `npm` is needed to run the app.** The compiled CSS/JS is committed in `public/build/`
-> and Laravel serves it automatically. You do **not** run `npm install`, `npm run build`,
-> or `npm run dev` just to launch the project — only `php artisan serve`.
->
-> `npm` is only for **editing** the frontend (`resources/sass`, `resources/js`):
-> run `npm install` once, then `npm run build` to recompile — or `npm run dev` for live
-> hot-reload while developing. Skip this entirely if you're just running/grading the app.
 
 ---
 
@@ -170,16 +119,24 @@ Active semester after seeding: **S.Y. 2026-2027 · 1st Semester**, enrollment op
 | `registrars` | Registrar profile linked to a user |
 | `applications` | Grade 11 admission application (DepEd fields) — draft / pending / invalid / qualified / waitlisted |
 | `application_documents` | Uploaded admission docs (SF10, SF9, good moral, PSA, 2x2) |
+| `enrollment_documents` | Grade 12 enrollment requirements (SF9, 2x2 photo) |
+| `enrollments` | Student enrollment per section — pending / approved / invalid (returned) |
+| `enrollment_subjects` | Snapshot of subjects per enrollment, with grade and status |
 | `school_years` | School years — one active, with active semester (1st/2nd) and enrollment open/closed |
 | `strands` | SHS strands — STEM, ABM, HUMSS, GAS, TVL |
 | `subjects` | Master subject list |
 | `sections` | Class section per strand / grade / semester / school year |
 | `section_subjects` | Fixed subjects per section + the generated weekly schedule slot (day/time/room) |
-| `enrollments` | Student enrollment per section — pending / approved / invalid (returned) |
-| `enrollment_subjects` | Snapshot of subjects per enrollment, with grade and status |
-| `enrollment_documents` | Grade 12 enrollment requirements (SF9, 2x2 photo) |
 | `semester_records` | 100-point average per student per semester, locked on finalization |
 | `audit_logs` | Trail of registrar actions |
+| `migrations` | Laravel migration history |
+| `failed_jobs` | Queue failures for background jobs |
+| `password_change_otps` | One-time passwords for profile password changes |
+| `password_reset_tokens` | Password reset tokens for forgot-password flow |
+| `sessions` | Session storage for logged-in users |
+| `cache` | Application cache entries |
+| `cache_locks` | Cache lock state for concurrency-safe operations |
+| `job_batches` | Batch job tracking for queued tasks |
 
 ---
 
@@ -187,38 +144,43 @@ Active semester after seeding: **S.Y. 2026-2027 · 1st Semester**, enrollment op
 
 ```
 app/
-  Http/Controllers/
-    Auth/           — login (School ID/email), registration, OTP + first-password
-    Student/        — Application (wizard), Dashboard, Enrollment, Subject, Record, Section
-    Registrar/      — Dashboard, Application, Enrollment, Student, Section, Subject,
-                      Semester, Grade, SemesterRecord
-  Http/Middleware/
-    CheckRole.php          — role-based access
-    EnsureAdmitted.php     — keep un-admitted students in the application flow
-    EnsurePasswordChanged.php — force first-login password change
-  Services/
-    ScheduleGenerator.php  — weekly timetable from DepEd class hours
-  Notifications/    — qualified / waitlisted / returned / password OTP emails
-  Models/           — Eloquent models with relationships
+  Http/
+    Controllers/
+      Auth/           — login (School ID/email), registration, OTP + first-password
+      Student/        — Application (wizard), Dashboard, Enrollment, Subject, Record, Section
+      Registrar/      — Dashboard, Application, Enrollment, Student, Section, Subject,
+                        Semester, Grade, SemesterRecord
+    Middleware/
+      CheckRole.php          — role-based access
+      EnsureAdmitted.php     — keep un-admitted students in the application flow
+      EnsurePasswordChanged.php — force first-login password change
+    Requests/         — form validation requests
+  Models/             — Eloquent models with relationships
+  Notifications/      — qualified / waitlisted / returned / password OTP emails
+  Providers/          — application service providers
+  Services/           — ScheduleGenerator and other domain services
 
-resources/views/
-  landing.blade.php — role selection
-  auth/             — login, register, first-password, verify
-  application/      — admission wizard + status (applicants)
-  emails/           — branded email bodies
-  vendor/mail/      — CISHS Markdown mail theme
-  layouts/          — app, guest, applicant, student, registrar base layouts
-  student/          — student portal pages
-  registrar/        — registrar portal pages (incl. applications, semester, grades, schedule)
+resources/
+  js/                 — frontend build entry points
+  sass/               — Bootstrap-based styles
+  views/
+    landing.blade.php — role selection
+    auth/             — login, register, first-password, verify
+    application/      — admission wizard + status (applicants)
+    emails/           — branded email bodies
+    vendor/mail/      — CISHS Markdown mail theme
+    layouts/          — app, guest, applicant, student, registrar base layouts
+    student/          — student portal pages
+    registrar/        — registrar portal pages (incl. applications, semester, grades, schedule)
 
 database/
-  migrations/       — domain tables + Laravel defaults
-  seeders/          — SchoolYear, Strand, Subject, User, Section, SectionSubject,
-                      Enrollment, Grade12Scenario, Grade
+  migrations/         — domain tables + Laravel defaults
+  seeders/            — SchoolYear, Strand, Subject, User, Section, SectionSubject,
+                        Enrollment, Grade12Scenario, Grade
 
 routes/
-  web.php           — application + student + registrar route groups
-  auth.php          — auth routes (login, OTP, verification)
+  web.php             — application + student + registrar route groups
+  auth.php            — auth routes (login, OTP, verification)
 ```
 
 ---
@@ -232,43 +194,107 @@ Login accepts a **School ID / Staff ID or email**.
 | `/` | — | Landing / role selection |
 | `/login`, `/register` | guest | Login (School ID/email) + applicant registration |
 | `/application*` | auth, verified, role:student | Admission wizard + status (applicants) |
-| `/student/*` | auth, verified, admitted, role:student | Student portal (admitted only) |
+| `/student/*` | auth, verified, admitted, mustchange, role:student | Student portal (admitted only) |
 | `/registrar/*` | auth, verified, role:registrar | Registrar portal (incl. applications, schedules) |
-| `/first-password` | auth | Forced password change after first login |
-| `/profile` | auth | Profile edit + password change (OTP) |
+| `/dashboard` | auth, verified, admitted, mustchange | Role-aware dashboard redirect |
 
 ---
 
-## Verify Setup
+## How It Works
 
-```powershell
-# All routes registered
-php artisan route:list
+This system separates admission from enrollment and supports two user roles: applicants/students and registrars.
 
-# Migrations ran clean
-php artisan migrate:status
+### Admission flow (applicants)
 
-# Run tests (includes portal smoke tests)
-php artisan test
-```
+- New users register at `/register` using name, birthdate, email, and password.
+- After registration they must verify their email before continuing.
+- Verified applicants submit a Grade 11 admission application in a wizard:
+  1. Personal information
+  2. Education background + strand choice
+  3. Upload required documents
+  4. Review and submit
+- The application is saved as a draft while the user completes the wizard.
+- When the form is submitted, the application status becomes `pending`.
+- A registrar reviews pending applications under `/registrar/applications`.
+- The registrar can:
+  - `Qualify` the application, which issues a School ID and default password and creates the student record.
+  - `Waitlist` if no slots remain for the chosen strand and grade.
+  - `Return` the application as `invalid` with remarks so the applicant can fix and resubmit.
+- Qualified applicants receive an email (or a log entry in local development) with their School ID and temporary password.
+- When the applicant logs in with School ID they are forced to set a new password before accessing the student portal.
+
+### Student flow
+
+- A qualified student has `role = student` and `school_id` set on `users`.
+- The `EnsureAdmitted` middleware keeps unadmitted students on the application flow until they become admitted.
+- Admitted students use `/student/*` routes after email verification and password change.
+- Enrollment is per active school year and active semester.
+- Students choose a section for their strand and grade, then submit an enrollment request.
+- Grade 12 students must also upload SF9 and 2x2 photo files.
+- Enrollment is created with status `pending` and the section's subjects are copied into `enrollment_subjects`.
+- Registrar approval converts the enrollment into an approved enrollment and finalizes the student into a section schedule.
+- Students can view their section, schedule, subjects, status, and certificate pages.
+
+### Registrar flow
+
+- Registrars log in using `Staff ID` or email.
+- They access `/registrar/dashboard`, application review, section and subject management, enrollment approval, grade encoding, and semester records.
+- Core registrar capabilities:
+  - Create and manage school years, set the active semester, and open/close enrollment.
+  - Create sections per strand, grade, semester, and year.
+  - Assign subjects to sections and generate a weekly schedule automatically using `ScheduleGenerator`.
+  - Review and qualify/waitlist/return applications.
+  - Approve or reject student enrollments.
+  - Encode grades for enrollment subjects and lock semester records when ready.
+
+### Key data model behavior
+
+- `users` stores auth accounts plus `role`, `school_id`, and `must_change_password`.
+- `applications` stores the admission wizard data, status, and current step.
+- `application_documents` stores uploaded admission documents by type.
+- `students` is created only when an application is qualified.
+- `sections` hold the academic section metadata and capacity.
+- `section_subjects` connect subjects to a section and store schedule slots.
+- `enrollments` represent a student's enrollment attempt for a section.
+- `enrollment_subjects` snapshot the section's subjects at the time of enrollment.
+- `semester_records` hold final semester averages once a registrar finalizes.
+
+### Important rules enforced by code
+
+- Applicants with `status = draft` or `invalid` can still edit and resubmit.
+- Only `pending` applications appear for registrar review.
+- Admission qualification checks available seats before admitting a student.
+- A returned application is not frozen and can be corrected + resubmitted.
+- Section schedules are generated by `app/Services/ScheduleGenerator.php` in 60-minute blocks over Mon–Fri.
+- A section is considered full when approved enrollments equal its `max_capacity`.
+- Students can only enroll for the currently active school year (`SchoolYear::active()`) and semester.
+- The `EnsurePasswordChanged` middleware forces a first-password reset when `must_change_password` is true.
 
 ---
 
-## Sharing with Teammates (ngrok)
+## Local Setup
+
+> On Windows, use PowerShell.
 
 ```powershell
-# Terminal 1
+# 1. Clone the repo
+git clone https://github.com/gjvlio/E-Tala-Enrollment-System.git
+cd Webdev_SchoolEnrollmentSystem
+
+# 2. Install PHP dependencies
+composer install
+
+# 3. Copy environment file
+copy .env.example .env
+php artisan key:generate
+
+# 4. Create MySQL database
+# CREATE DATABASE school_enrollment_db;
+
+# 5. Set DB credentials in .env (DB_DATABASE, DB_USERNAME, DB_PASSWORD)
+
+# 6. Run migrations + seed sample data
+php artisan migrate:fresh --seed
+
+# 7. Start the server
 php artisan serve
-
-# Terminal 2
-ngrok http 8000
-```
-
-Copy the `https://abc123.ngrok-free.app` URL and share. Add to `.env`:
-
-```env
-APP_URL=https://abc123.ngrok-free.app
-SESSION_DOMAIN=.ngrok-free.app
-```
-
-> Free tier URL changes every restart. Re-share each session.
