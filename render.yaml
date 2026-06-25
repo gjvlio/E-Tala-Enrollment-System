@@ -1,0 +1,77 @@
+services:
+  - type: web
+    name: cishs-enrollment
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /
+    envVars:
+      - key: APP_NAME
+        value: CISHS
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: "false"
+      # Generate locally with `php artisan key:generate --show` and paste here.
+      - key: APP_KEY
+        sync: false
+      # Set to your Render URL after first deploy, e.g. https://cishs-enrollment.onrender.com
+      - key: APP_URL
+        sync: false
+      - key: LOG_CHANNEL
+        value: stderr
+      # Postgres (free) — pulled from the database below.
+      - key: DB_CONNECTION
+        value: pgsql
+      - key: DB_HOST
+        fromDatabase:
+          name: cishs-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: cishs-db
+          property: port
+      - key: DB_DATABASE
+        fromDatabase:
+          name: cishs-db
+          property: database
+      - key: DB_USERNAME
+        fromDatabase:
+          name: cishs-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: cishs-db
+          property: password
+      - key: SESSION_DRIVER
+        value: database
+      - key: CACHE_STORE
+        value: database
+      - key: QUEUE_CONNECTION
+        value: database
+      - key: FILESYSTEM_DISK
+        value: public
+      # Seed only on the first deploy, then flip to false.
+      - key: SEED_ON_DEPLOY
+        value: "true"
+      # Mail — set these in the Render dashboard (Mailtrap/Resend/Gmail SMTP).
+      - key: MAIL_MAILER
+        value: smtp
+      - key: MAIL_HOST
+        sync: false
+      - key: MAIL_PORT
+        sync: false
+      - key: MAIL_USERNAME
+        sync: false
+      - key: MAIL_PASSWORD
+        sync: false
+      - key: MAIL_FROM_ADDRESS
+        sync: false
+      - key: MAIL_FROM_NAME
+        value: CISHS
+
+databases:
+  - name: cishs-db
+    plan: free
+    databaseName: cishs_enrollment
+    user: cishs
