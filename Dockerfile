@@ -9,26 +9,26 @@ COPY resources ./resources
 COPY vite.config.js ./
 RUN npm run build
 
-# ── Stage 2: install PHP dependencies ─────────────────────────────────────────
-FROM composer:2 AS vendor
-WORKDIR /app
-COPY . .
-RUN composer install --no-dev --optimize-autoloader --no-interaction --no-progress
-
-# ── Stage 3: runtime ──────────────────────────────────────────────────────────
-FROM php:8.3-cli AS runtime
+# ── Stage 2: PHP 8.4 runtime + Composer deps ──────────────────────────────────
+# Laravel 13 / Symfony 8 require PHP >= 8.4, so build and run on the same 8.4.
+FROM php:8.4-cli AS runtime
 
 # System libs + PHP extensions Laravel + Postgres need.
 RUN apt-get update && apt-get install -y --no-install-recommends \
-        libpq-dev libzip-dev unzip \
+        libpq-dev libzip-dev unzip git \
     && docker-php-ext-install pdo pdo_pgsql pdo_mysql zip bcmath \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
+# Composer (from the official image).
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+
 WORKDIR /app
 
-# App source, with vendor + built assets from earlier stages.
+# App source first, then install PHP deps on 8.4 (artisan scripts run here too).
 COPY . .
-COPY --from=vendor /app/vendor ./vendor
+RUN composer install --no-dev --optimize-autoloader --no-interaction --no-progress
+
+# Built assets from the node stage.
 COPY --from=assets /app/public/build ./public/build
 
 # Writable runtime dirs.
