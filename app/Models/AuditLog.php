@@ -19,14 +19,13 @@ class AuditLog extends Model
         return $this->belongsTo(User::class);
     }
 
-    /** Convenience writer for registrar actions. */
     public static function record(string $action, ?string $modelType = null, ?int $modelId = null, ?string $description = null): void
     {
         static::create([
-            'user_id'     => auth()->id(),
-            'action'      => $action,
-            'model_type'  => $modelType,
-            'model_id'    => $modelId,
+            'user_id' => auth()->id(),
+            'action' => $action,
+            'model_type' => $modelType,
+            'model_id' => $modelId,
             'description' => $description,
         ]);
     }

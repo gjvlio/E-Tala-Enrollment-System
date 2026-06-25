@@ -8,7 +8,6 @@ use Symfony\Component\HttpFoundation\Response;
 
 class EnsurePasswordChanged
 {
-    // Make students still on the system default password set a new one first.
     public function handle(Request $request, Closure $next): Response
     {
         $user = $request->user();

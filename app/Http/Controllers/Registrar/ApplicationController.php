@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Registrar;
 
 use App\Http\Controllers\Controller;
 use App\Models\Application;
+use App\Models\SchoolYear;
 use App\Models\Section;
 use App\Models\Student;
 use App\Notifications\ApplicationDesignatedNotification;
@@ -18,7 +19,6 @@ use Illuminate\View\View;
 
 class ApplicationController extends Controller
 {
-    // submitted applications, filterable by status
     public function showApplications(Request $request): View
     {
         $status = $request->query('status');
@@ -37,28 +37,25 @@ class ApplicationController extends Controller
 
         return view('registrar.applications.index', [
             'applications' => $applications,
-            'counts'       => $counts,
+            'counts' => $counts,
             'activeStatus' => $status,
         ]);
     }
 
-    // review screen — details, documents, and slot availability
     public function showApplication(Application $application): View
     {
         $application->load(['user', 'strand', 'documents', 'reviewer']);
 
-        $seats    = $this->seatsFor($application);
+        $seats = $this->seatsFor($application);
         $admitted = $this->admittedFor($application);
 
-        // For waitlisted applicants the registrar designates a specific vacant
-        // section matching the applicant's strand + grade.
         $vacantSections = collect();
         if ($application->isWaitlisted()) {
             $vacantSections = Section::with('strand')
                 ->withCount(['enrollments as approved_count' => fn ($q) => $q->where('status', 'approved')])
                 ->where('strand_id', $application->strand_id)
                 ->where('grade_level', $application->grade_level)
-                ->when(\App\Models\SchoolYear::active(), fn ($q, $sy) => $q->where('school_year_id', $sy->id))
+                ->when(SchoolYear::active(), fn ($q, $sy) => $q->where('school_year_id', $sy->id))
                 ->orderBy('section_name')
                 ->get()
                 ->reject(fn ($section) => $section->isFull())
@@ -66,15 +63,14 @@ class ApplicationController extends Controller
         }
 
         return view('registrar.applications.show', [
-            'application'    => $application,
-            'seats'          => $seats,
-            'admitted'       => $admitted,
-            'hasSlot'        => $seats > 0 && $admitted < $seats,
+            'application' => $application,
+            'seats' => $seats,
+            'admitted' => $admitted,
+            'hasSlot' => $seats > 0 && $admitted < $seats,
             'vacantSections' => $vacantSections,
         ]);
     }
 
-    // return the application as invalid with a reason — applicant reuploads + resubmits
     public function returnApplication(Request $request, Application $application): RedirectResponse
     {
         $validated = $request->validate([
@@ -86,8 +82,8 @@ class ApplicationController extends Controller
         }
 
         $application->update([
-            'status'      => 'invalid',
-            'remarks'     => $validated['remarks'],
+            'status' => 'invalid',
+            'remarks' => $validated['remarks'],
             'reviewed_by' => $request->user()->registrar?->id,
             'reviewed_at' => now(),
         ]);
@@ -99,7 +95,6 @@ class ApplicationController extends Controller
             ->with('status', 'application-returned');
     }
 
-    // qualify: issue School ID + default password and create the student — or waitlist if full
     public function qualifyApplication(Request $request, Application $application): RedirectResponse
     {
         if (! $application->isPending()) {
@@ -108,10 +103,9 @@ class ApplicationController extends Controller
 
         $registrarId = $request->user()->registrar?->id;
 
-        // no slot left for this strand + grade → waitlist instead
         if (! ($this->seatsFor($application) > 0 && $this->admittedFor($application) < $this->seatsFor($application))) {
             $application->update([
-                'status'      => 'waitlisted',
+                'status' => 'waitlisted',
                 'reviewed_by' => $registrarId,
                 'reviewed_at' => now(),
             ]);
@@ -130,30 +124,30 @@ class ApplicationController extends Controller
 
         DB::transaction(function () use ($application, $schoolId, $plainPassword, $registrarId) {
             Student::create([
-                'user_id'        => $application->user_id,
+                'user_id' => $application->user_id,
                 'student_number' => $schoolId,
-                'first_name'     => $application->first_name,
-                'last_name'      => $application->last_name,
-                'phone'          => $application->mobile,
-                'birthdate'      => $application->birthdate,
-                'address'        => trim(implode(', ', array_filter([
+                'first_name' => $application->first_name,
+                'last_name' => $application->last_name,
+                'phone' => $application->mobile,
+                'birthdate' => $application->birthdate,
+                'address' => trim(implode(', ', array_filter([
                     $application->current_address,
                     $application->current_barangay,
                     $application->current_city,
                     $application->current_province,
                 ]))),
-                'strand_id'      => $application->strand_id,
-                'grade_level'    => $application->grade_level,
+                'strand_id' => $application->strand_id,
+                'grade_level' => $application->grade_level,
             ]);
 
             $user = $application->user;
             $user->school_id = $schoolId;
-            $user->password = $plainPassword;          // hashed by the cast
+            $user->password = $plainPassword;
             $user->must_change_password = true;
             $user->save();
 
             $application->update([
-                'status'      => 'qualified',
+                'status' => 'qualified',
                 'reviewed_by' => $registrarId,
                 'reviewed_at' => now(),
             ]);
@@ -166,8 +160,6 @@ class ApplicationController extends Controller
             ->with('status', 'application-qualified');
     }
 
-    // designate a waitlisted applicant to a chosen vacant section: issue School ID
-    // + default password and create the student (the student then self-enrolls).
     public function designateApplication(Request $request, Application $application): RedirectResponse
     {
         if (! $application->isWaitlisted()) {
@@ -181,7 +173,6 @@ class ApplicationController extends Controller
         $section = Section::withCount(['enrollments as approved_count' => fn ($q) => $q->where('status', 'approved')])
             ->findOrFail($validated['section_id']);
 
-        // Section must match the applicant's strand + grade and still have a slot.
         if (
             $section->strand_id !== $application->strand_id ||
             $section->grade_level !== $application->grade_level
@@ -193,36 +184,36 @@ class ApplicationController extends Controller
             return back()->withErrors(['designate' => 'That section just filled up. Pick another vacant section.']);
         }
 
-        $registrarId   = $request->user()->registrar?->id;
-        $schoolId      = Student::generateNumber();
+        $registrarId = $request->user()->registrar?->id;
+        $schoolId = Student::generateNumber();
         $plainPassword = strtoupper(Str::random(8));
 
         DB::transaction(function () use ($application, $schoolId, $plainPassword, $registrarId, $section) {
             Student::create([
-                'user_id'        => $application->user_id,
+                'user_id' => $application->user_id,
                 'student_number' => $schoolId,
-                'first_name'     => $application->first_name,
-                'last_name'      => $application->last_name,
-                'phone'          => $application->mobile,
-                'birthdate'      => $application->birthdate,
-                'address'        => trim(implode(', ', array_filter([
+                'first_name' => $application->first_name,
+                'last_name' => $application->last_name,
+                'phone' => $application->mobile,
+                'birthdate' => $application->birthdate,
+                'address' => trim(implode(', ', array_filter([
                     $application->current_address,
                     $application->current_barangay,
                     $application->current_city,
                     $application->current_province,
                 ]))),
-                'strand_id'      => $section->strand_id,
-                'grade_level'    => $section->grade_level,
+                'strand_id' => $section->strand_id,
+                'grade_level' => $section->grade_level,
             ]);
 
             $user = $application->user;
             $user->school_id = $schoolId;
-            $user->password = $plainPassword;          // hashed by the cast
+            $user->password = $plainPassword;
             $user->must_change_password = true;
             $user->save();
 
             $application->update([
-                'status'      => 'qualified',
+                'status' => 'qualified',
                 'reviewed_by' => $registrarId,
                 'reviewed_at' => now(),
             ]);
@@ -237,16 +228,14 @@ class ApplicationController extends Controller
             ->with('status', 'application-designated');
     }
 
-    // total seats across the strand's sections for that grade, in the active year
     private function seatsFor(Application $application): int
     {
         return (int) Section::where('strand_id', $application->strand_id)
             ->where('grade_level', $application->grade_level)
-            ->when(\App\Models\SchoolYear::active(), fn ($q, $sy) => $q->where('school_year_id', $sy->id))
+            ->when(SchoolYear::active(), fn ($q, $sy) => $q->where('school_year_id', $sy->id))
             ->sum('max_capacity');
     }
 
-    // students already admitted into that strand + grade
     private function admittedFor(Application $application): int
     {
         return Student::where('strand_id', $application->strand_id)

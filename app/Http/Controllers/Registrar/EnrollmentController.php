@@ -14,7 +14,6 @@ use Illuminate\Support\Facades\DB;
 
 class EnrollmentController extends Controller
 {
-    // List enrollments — filterable by status / strand / grade / section.
     public function showEnrollments(Request $request)
     {
         $schoolYear = SchoolYear::active();
@@ -49,7 +48,6 @@ class EnrollmentController extends Controller
         return view('registrar.enrollments.index', compact('enrollments', 'strands', 'sections', 'schoolYear'));
     }
 
-    // Single enrollment with student info and enrolled subjects.
     public function showEnrollment(Request $request, $enrollment)
     {
         $enrollment = Enrollment::with([
@@ -59,7 +57,6 @@ class EnrollmentController extends Controller
         return view('registrar.enrollments.show', compact('enrollment'));
     }
 
-    // Approve — set status, record approver/time, enforce section capacity.
     public function approveEnrollment(Request $request, $enrollment)
     {
         $enrollment = Enrollment::with('section')->findOrFail($enrollment);
@@ -68,7 +65,6 @@ class EnrollmentController extends Controller
             return back()->with('error', 'This enrollment has already been reviewed.');
         }
 
-        // Hard block when the section is full
         if ($enrollment->section->isFull()) {
             return back()->with('error', 'Cannot approve — section "'.$enrollment->section->section_name.'" is full.');
         }
@@ -76,10 +72,10 @@ class EnrollmentController extends Controller
         $registrar = Auth::user()->registrar;
 
         $enrollment->update([
-            'status'      => 'approved',
+            'status' => 'approved',
             'approved_by' => $registrar?->id,
             'reviewed_at' => now(),
-            'remarks'     => null,
+            'remarks' => null,
         ]);
 
         AuditLog::record('approved_enrollment', 'Enrollment', $enrollment->id,
@@ -88,8 +84,6 @@ class EnrollmentController extends Controller
         return back()->with('success', 'Enrollment approved.');
     }
 
-    // Mark invalid — return for compliance. The student can fix the issue and
-    // re-submit (this is not a hard rejection).
     public function rejectEnrollment(Request $request, $enrollment)
     {
         $enrollment = Enrollment::findOrFail($enrollment);
@@ -105,10 +99,10 @@ class EnrollmentController extends Controller
         $registrar = Auth::user()->registrar;
 
         $enrollment->update([
-            'status'      => 'invalid',
+            'status' => 'invalid',
             'approved_by' => $registrar?->id,
             'reviewed_at' => now(),
-            'remarks'     => $validated['remarks'],
+            'remarks' => $validated['remarks'],
         ]);
 
         AuditLog::record('invalidated_enrollment', 'Enrollment', $enrollment->id,
@@ -117,8 +111,6 @@ class EnrollmentController extends Controller
         return back()->with('success', 'Enrollment returned to the student for compliance.');
     }
 
-    // Reopen an invalid enrollment back to pending. Requires a valid reason
-    // (e.g. "student submitted Form 138"). Reopens the application for review.
     public function revertEnrollment(Request $request, $enrollment)
     {
         $enrollment = Enrollment::findOrFail($enrollment);
@@ -132,10 +124,10 @@ class EnrollmentController extends Controller
         ]);
 
         $enrollment->update([
-            'status'      => 'pending',
+            'status' => 'pending',
             'approved_by' => null,
             'reviewed_at' => null,
-            'remarks'     => 'Reopened by registrar: '.$validated['revert_reason'],
+            'remarks' => 'Reopened by registrar: '.$validated['revert_reason'],
         ]);
 
         AuditLog::record('reverted_enrollment', 'Enrollment', $enrollment->id,
@@ -144,17 +136,16 @@ class EnrollmentController extends Controller
         return back()->with('success', 'Enrollment reopened and set back to pending.');
     }
 
-    // Batch approve all selected pending enrollments (skips full sections).
     public function batchApprove(Request $request)
     {
         $validated = $request->validate([
-            'enrollment_ids'   => ['required', 'array'],
+            'enrollment_ids' => ['required', 'array'],
             'enrollment_ids.*' => ['integer', 'exists:enrollments,id'],
         ]);
 
         $registrar = Auth::user()->registrar;
         $approved = 0;
-        $skipped  = 0;
+        $skipped = 0;
 
         DB::transaction(function () use ($validated, $registrar, &$approved, &$skipped) {
             $enrollments = Enrollment::with('section')
@@ -165,11 +156,12 @@ class EnrollmentController extends Controller
             foreach ($enrollments as $enrollment) {
                 if ($enrollment->section->isFull()) {
                     $skipped++;
+
                     continue;
                 }
 
                 $enrollment->update([
-                    'status'      => 'approved',
+                    'status' => 'approved',
                     'approved_by' => $registrar?->id,
                     'reviewed_at' => now(),
                 ]);

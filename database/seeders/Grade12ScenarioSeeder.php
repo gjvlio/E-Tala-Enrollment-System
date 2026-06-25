@@ -10,7 +10,6 @@ use Illuminate\Support\Facades\Hash;
 
 class Grade12ScenarioSeeder extends Seeder
 {
-    // Grade 12 students across all strands with varied section fills, then a schedule for every section.
     public function run(): void
     {
         $sy = DB::table('school_years')->where('is_active', true)->value('id')
@@ -20,12 +19,10 @@ class Grade12ScenarioSeeder extends Seeder
         $core = DB::table('subjects')->where('subject_code', 'like', 'CORE-%')->pluck('id')->all();
         $strandSubjects = fn (string $code) => DB::table('subjects')->where('subject_code', 'like', $code.'-%')->pluck('id')->all();
 
-        // One reusable hash — keeps the seeder fast for ~130 students.
         $password = Hash::make('password');
 
-        // [strand, section name, AM/PM, capacity, students to enroll]
         $scenarios = [
-            ['STEM',  'Gabriela Silang', 'AM', 40, 40],  // FULL block
+            ['STEM',  'Gabriela Silang', 'AM', 40, 40],
             ['STEM',  'Melchora Aquino', 'AM', 40, 24],
             ['ABM',   'Gabriela Silang', 'AM', 40, 10],
             ['HUMSS', 'Gabriela Silang', 'AM', 40, 35],
@@ -33,14 +30,11 @@ class Grade12ScenarioSeeder extends Seeder
             ['TVL',   'Macario Sakay',   'PM', 40, 18],
         ];
 
-        // Grade 12 students were admitted the previous year, so their School IDs
-        // carry the 2025 prefix (incoming G11 admitted this year use 2026).
         $seq = 0;
 
         foreach ($scenarios as [$strandCode, $name, $time, $capacity, $fill]) {
             $sid = $strandId($strandCode);
 
-            // Resolve or create the Grade 12 section.
             $sectionId = DB::table('sections')
                 ->where('strand_id', $sid)->where('grade_level', '12')
                 ->where('section_name', $name)->where('semester', '1st')->value('id');
@@ -53,19 +47,16 @@ class Grade12ScenarioSeeder extends Seeder
                 ]);
             }
 
-            // Never enroll past the section's capacity (exact fills, no overflow).
             $fill = min($fill, $capacity);
 
-            // Attach subjects (core + strand-specific) to the section.
             $subjectIds = array_values(array_unique(array_merge($core, $strandSubjects($strandCode))));
             Section::find($sectionId)->subjects()->sync($subjectIds);
 
-            // Enroll students up to the target fill (approved).
             for ($i = 0; $i < $fill; $i++) {
                 $seq++;
                 $sn = '2025-'.str_pad((string) $seq, 5, '0', STR_PAD_LEFT);
                 $first = fake()->firstName();
-                $last  = fake()->lastName();
+                $last = fake()->lastName();
 
                 $uid = DB::table('users')->insertGetId([
                     'name' => "$first $last", 'email' => "g12.$seq@student.edu.ph",
@@ -96,17 +87,15 @@ class Grade12ScenarioSeeder extends Seeder
             }
         }
 
-        // Unenrolled tester accounts (fixed School IDs) so the enrollment FORM is
-        // reachable — seeded students above are already enrolled. Password: password
         $testers = [
-            ['2026-11900', 'STEM', '11'],  // Grade 11 enroll form (no documents)
-            ['2025-12900', 'STEM', '12'],  // Grade 12 enroll form (SF9 + 2x2 photo)
+            ['2026-11900', 'STEM', '11'],
+            ['2025-12900', 'STEM', '12'],
             ['2025-12901', 'ABM',  '12'],
         ];
         foreach ($testers as [$sn, $code, $grade]) {
             $sid = $strandId($code);
             $first = fake()->firstName();
-            $last  = fake()->lastName();
+            $last = fake()->lastName();
 
             $uid = DB::table('users')->insertGetId([
                 'name' => "$first $last", 'email' => strtolower("tester.$sn@student.edu.ph"),
@@ -120,10 +109,9 @@ class Grade12ScenarioSeeder extends Seeder
                 'strand_id' => $sid, 'grade_level' => $grade,
                 'created_at' => now(), 'updated_at' => now(),
             ]);
-            // intentionally NOT enrolled
+
         }
 
-        // Generate a weekly schedule for every section (G11 + G12).
         $generator = new ScheduleGenerator;
         Section::all()->each(fn (Section $section) => $generator->generate($section));
     }

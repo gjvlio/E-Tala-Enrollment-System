@@ -13,18 +13,15 @@ use Illuminate\Support\Facades\DB;
 
 class GradeSeeder extends Seeder
 {
-    // Grade 12 students' PAST Grade 11 records (1st + 2nd sem) — full section +
-    // graded subjects so My Records can show a breakdown. The current semester
-    // stays ungraded (they're still enrolling).
     public function run(): void
     {
         $testers = ['2026-11900', '2025-12900', '2025-12901'];
-        $pastSy  = SchoolYear::where('year_label', '2025-2026')->first();
+        $pastSy = SchoolYear::where('year_label', '2025-2026')->first();
         if (! $pastSy) {
             return;
         }
 
-        $core       = Subject::where('subject_code', 'like', 'CORE-%')->pluck('id')->all();
+        $core = Subject::where('subject_code', 'like', 'CORE-%')->pluck('id')->all();
         $strandSubs = fn (?string $code) => $code
             ? Subject::where('subject_code', 'like', $code.'-%')->pluck('id')->all()
             : [];
@@ -36,16 +33,13 @@ class GradeSeeder extends Seeder
                 ->get();
 
             $sectionCache = [];
-            $placed       = [];          // (strand-sem) => students already seated
-            $capacity     = 50;
+            $placed = [];
+            $capacity = 50;
 
-            // Resolve a past Grade 11 section for a strand + semester, rolling over
-            // to a new section once the current one hits capacity — so no class ever
-            // overflows (was cramming all 64 STEM G12 into one 50-seat section).
             $sectionFor = function (Student $student, string $sem) use (&$sectionCache, &$placed, $capacity, $pastSy, $core, $strandSubs) {
                 $group = $student->strand_id.'-'.$sem;
-                $index = intdiv($placed[$group] ?? 0, $capacity);   // 0, 1, 2 …
-                $key   = $group.'-'.$index;
+                $index = intdiv($placed[$group] ?? 0, $capacity);
+                $key = $group.'-'.$index;
 
                 if (! isset($sectionCache[$key])) {
                     $base = $sem === '1st' ? 'Kasipagan' : 'Katapangan';
@@ -53,11 +47,11 @@ class GradeSeeder extends Seeder
 
                     $section = Section::firstOrCreate(
                         [
-                            'strand_id'      => $student->strand_id,
+                            'strand_id' => $student->strand_id,
                             'school_year_id' => $pastSy->id,
-                            'grade_level'    => '11',
-                            'semester'       => $sem,
-                            'section_name'   => $name,
+                            'grade_level' => '11',
+                            'semester' => $sem,
+                            'section_name' => $name,
                         ],
                         ['time_period' => 'AM', 'max_capacity' => $capacity],
                     );
@@ -78,25 +72,25 @@ class GradeSeeder extends Seeder
                     ['section' => $section, 'subjects' => $subjects] = $sectionFor($student, $sem);
 
                     $enrollment = Enrollment::create([
-                        'student_id'   => $student->id,
-                        'section_id'   => $section->id,
-                        'status'       => 'approved',
+                        'student_id' => $student->id,
+                        'section_id' => $section->id,
+                        'status' => 'approved',
                         'submitted_at' => now(),
-                        'reviewed_at'  => now(),
+                        'reviewed_at' => now(),
                     ]);
 
-                    $rows   = [];
+                    $rows = [];
                     $grades = [];
                     foreach ($subjects as $subjectId) {
-                        $grade    = $this->randomGrade();
+                        $grade = $this->randomGrade();
                         $grades[] = $grade;
-                        $rows[]   = [
+                        $rows[] = [
                             'enrollment_id' => $enrollment->id,
-                            'subject_id'    => $subjectId,
-                            'grade'         => $grade,
-                            'status'        => $grade >= 75 ? 'passed' : 'failed',
-                            'created_at'    => now(),
-                            'updated_at'    => now(),
+                            'subject_id' => $subjectId,
+                            'grade' => $grade,
+                            'status' => $grade >= 75 ? 'passed' : 'failed',
+                            'created_at' => now(),
+                            'updated_at' => now(),
                         ];
                     }
                     DB::table('enrollment_subjects')->insert($rows);
@@ -110,7 +104,6 @@ class GradeSeeder extends Seeder
         });
     }
 
-    // Mostly high (80s–90s), with the occasional dip toward the 70s.
     private function randomGrade(): int
     {
         return mt_rand(1, 6) === 1 ? mt_rand(72, 84) : mt_rand(85, 97);

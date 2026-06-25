@@ -43,11 +43,10 @@ class Student extends Model
         return "{$this->first_name} {$this->last_name}";
     }
 
-    /** Generate a unique student number / School ID like 2026-00006. */
     public static function generateNumber(): string
     {
         $year = date('Y');
-        $seq  = static::count() + 1;
+        $seq = static::count() + 1;
 
         do {
             $number = $year.'-'.str_pad((string) $seq, 5, '0', STR_PAD_LEFT);
@@ -57,7 +56,6 @@ class Student extends Model
         return $number;
     }
 
-    /** Latest enrollment for the given active school year (or overall). */
     public function currentEnrollment(?int $schoolYearId = null)
     {
         return $this->enrollments()

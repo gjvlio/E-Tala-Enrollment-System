@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Auth;
 
+use App\Models\SchoolYear;
 use App\Models\User;
 use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -11,6 +12,18 @@ use Tests\TestCase;
 class RegistrationTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        SchoolYear::create([
+            'year_label' => '2026-2027',
+            'is_active' => true,
+            'active_semester' => '1st',
+            'is_enrollment_open' => true,
+        ]);
+    }
 
     public function test_registration_screen_can_be_rendered(): void
     {
@@ -25,10 +38,10 @@ class RegistrationTest extends TestCase
 
         $response = $this->post('/register', [
             'first_name' => 'Test',
-            'last_name'  => 'User',
-            'birthdate'  => '2009-01-01',
-            'email'      => 'test@example.com',
-            'password'   => 'password',
+            'last_name' => 'User',
+            'birthdate' => '2009-01-01',
+            'email' => 'test@example.com',
+            'password' => 'password',
             'password_confirmation' => 'password',
         ]);
 

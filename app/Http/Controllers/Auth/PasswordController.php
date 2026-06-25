@@ -14,7 +14,6 @@ use Illuminate\View\View;
 
 class PasswordController extends Controller
 {
-    // validate the change and email a 6-digit code; the new password waits until confirmed
     public function update(Request $request): RedirectResponse
     {
         $validated = $request->validateWithBag('updatePassword', [
@@ -25,14 +24,13 @@ class PasswordController extends Controller
         $user = $request->user();
         $code = (string) random_int(100000, 999999);
 
-        // One pending change per user — discard any previous request.
         PasswordChangeOtp::where('user_id', $user->id)->delete();
 
         PasswordChangeOtp::create([
-            'user_id'      => $user->id,
-            'code'         => Hash::make($code),
+            'user_id' => $user->id,
+            'code' => Hash::make($code),
             'new_password' => Hash::make($validated['password']),
-            'expires_at'   => now()->addMinutes(10),
+            'expires_at' => now()->addMinutes(10),
         ]);
 
         $user->notify(new PasswordChangeOtpNotification($code));
@@ -40,7 +38,6 @@ class PasswordController extends Controller
         return redirect()->route('password.otp')->with('status', 'password-otp-sent');
     }
 
-    // OTP entry page (only while a code is pending)
     public function showOtp(Request $request): RedirectResponse|View
     {
         $otp = PasswordChangeOtp::where('user_id', $request->user()->id)->first();
@@ -52,7 +49,6 @@ class PasswordController extends Controller
         return view('profile.confirm-password-otp');
     }
 
-    // check the code and apply the held password
     public function confirmOtp(Request $request): RedirectResponse
     {
         $request->validate([
@@ -72,8 +68,6 @@ class PasswordController extends Controller
             return back()->withErrors(['code' => 'The code you entered is incorrect.']);
         }
 
-        // new_password is already hashed; write it raw so the User model's
-        // 'hashed' cast does not double-hash it.
         DB::table('users')
             ->where('id', $request->user()->id)
             ->update(['password' => $otp->new_password]);
@@ -83,7 +77,6 @@ class PasswordController extends Controller
         return redirect()->route('profile.edit')->with('status', 'password-updated');
     }
 
-    // send a fresh code for the pending change
     public function resendOtp(Request $request): RedirectResponse
     {
         $otp = PasswordChangeOtp::where('user_id', $request->user()->id)->first();
@@ -95,7 +88,7 @@ class PasswordController extends Controller
         $code = (string) random_int(100000, 999999);
 
         $otp->update([
-            'code'       => Hash::make($code),
+            'code' => Hash::make($code),
             'expires_at' => now()->addMinutes(10),
         ]);
 

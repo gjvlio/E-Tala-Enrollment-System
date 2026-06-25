@@ -62,10 +62,10 @@ class PasswordUpdateTest extends TestCase
     {
         $user = User::factory()->create();
         PasswordChangeOtp::create([
-            'user_id'      => $user->id,
-            'code'         => Hash::make('123456'),
+            'user_id' => $user->id,
+            'code' => Hash::make('123456'),
             'new_password' => Hash::make('new-password'),
-            'expires_at'   => now()->addMinutes(10),
+            'expires_at' => now()->addMinutes(10),
         ]);
 
         $response = $this
@@ -81,10 +81,10 @@ class PasswordUpdateTest extends TestCase
     {
         $user = User::factory()->create();
         PasswordChangeOtp::create([
-            'user_id'      => $user->id,
-            'code'         => Hash::make('123456'),
+            'user_id' => $user->id,
+            'code' => Hash::make('123456'),
             'new_password' => Hash::make('new-password'),
-            'expires_at'   => now()->addMinutes(10),
+            'expires_at' => now()->addMinutes(10),
         ]);
 
         $response = $this
@@ -101,10 +101,10 @@ class PasswordUpdateTest extends TestCase
     {
         $user = User::factory()->create();
         PasswordChangeOtp::create([
-            'user_id'      => $user->id,
-            'code'         => Hash::make('123456'),
+            'user_id' => $user->id,
+            'code' => Hash::make('123456'),
             'new_password' => Hash::make('new-password'),
-            'expires_at'   => now()->subMinute(),
+            'expires_at' => now()->subMinute(),
         ]);
 
         $response = $this

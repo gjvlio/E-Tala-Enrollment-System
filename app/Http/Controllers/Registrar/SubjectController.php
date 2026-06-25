@@ -10,7 +10,6 @@ use Illuminate\Validation\Rule;
 
 class SubjectController extends Controller
 {
-    // List all subjects, grouped by code prefix (CORE / STEM / ABM / ...).
     public function showSubjects(Request $request)
     {
         $subjects = Subject::orderBy('subject_code')->get();
@@ -85,7 +84,7 @@ class SubjectController extends Controller
         return $request->validate([
             'subject_code' => ['required', 'string', 'max:50', Rule::unique('subjects', 'subject_code')->ignore($ignoreId)],
             'subject_name' => ['required', 'string', 'max:150'],
-            'units'        => ['required', 'integer', 'min:1', 'max:6'],
+            'units' => ['required', 'integer', 'min:1', 'max:6'],
         ]);
     }
 }

@@ -10,7 +10,6 @@ use Illuminate\View\View;
 
 class FirstPasswordController extends Controller
 {
-    // forced password change on first login with the default password
     public function show(Request $request): View|RedirectResponse
     {
         if (! $request->user()->must_change_password) {
@@ -20,7 +19,6 @@ class FirstPasswordController extends Controller
         return view('auth.first-password');
     }
 
-    // save the new password and clear the flag
     public function update(Request $request): RedirectResponse
     {
         $validated = $request->validate([
@@ -28,7 +26,7 @@ class FirstPasswordController extends Controller
         ]);
 
         $user = $request->user();
-        $user->password = $validated['password'];   // hashed by the cast
+        $user->password = $validated['password'];
         $user->must_change_password = false;
         $user->save();
 

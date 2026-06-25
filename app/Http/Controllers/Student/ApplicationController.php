@@ -9,13 +9,13 @@ use App\Models\Strand;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 use Illuminate\View\View;
 
 class ApplicationController extends Controller
 {
     private array $documentTypes = ApplicationDocument::TYPES;
 
-    // wizard for a draft/returned app; submitted ones go to the status page
     public function show(Request $request): View|RedirectResponse
     {
         $user = $request->user();
@@ -31,16 +31,15 @@ class ApplicationController extends Controller
         }
 
         return view('application.wizard', [
-            'application'   => $application,
-            'strands'       => Strand::orderBy('strand_code')->get(),
+            'application' => $application,
+            'strands' => Strand::orderBy('strand_code')->get(),
             'documentTypes' => $this->documentTypes,
         ]);
     }
 
-    // save one step — Next validates, Back doesn't
     public function save(Request $request): RedirectResponse
     {
-        $user        = $request->user();
+        $user = $request->user();
         $application = $this->draftFor($user);
 
         if (in_array($application->status, ['pending', 'qualified', 'waitlisted'])) {
@@ -56,9 +55,9 @@ class ApplicationController extends Controller
         }
 
         match ($step) {
-            1       => $this->saveStep1($request, $application),
-            2       => $this->saveStep2($request, $application),
-            3       => $this->saveStep3($request, $application),
+            1 => $this->saveStep1($request, $application),
+            2 => $this->saveStep2($request, $application),
+            3 => $this->saveStep3($request, $application),
             default => null,
         };
 
@@ -67,10 +66,9 @@ class ApplicationController extends Controller
         return redirect()->route('application.show');
     }
 
-    // lock the application and send it for registrar review
     public function submit(Request $request): RedirectResponse
     {
-        $user        = $request->user();
+        $user = $request->user();
         $application = $user->application;
 
         if (! $application || in_array($application->status, ['pending', 'qualified', 'waitlisted'])) {
@@ -83,7 +81,7 @@ class ApplicationController extends Controller
         }
 
         $application->update([
-            'status'       => 'pending',
+            'status' => 'pending',
             'submitted_at' => now(),
             'current_step' => 4,
         ]);
@@ -91,7 +89,6 @@ class ApplicationController extends Controller
         return redirect()->route('application.status');
     }
 
-    // status page for a submitted (pending/qualified) application
     public function status(Request $request): View|RedirectResponse
     {
         $user = $request->user();
@@ -109,48 +106,46 @@ class ApplicationController extends Controller
         return view('application.status', ['application' => $application]);
     }
 
-    // ── Step handlers ──────────────────────────────────────────────────────
-
     private function saveStep1(Request $request, Application $application): void
     {
         $data = $request->validate([
-            'lrn'             => ['nullable', 'digits:12'],
-            'first_name'      => ['required', 'string', 'max:100'],
-            'middle_name'     => ['nullable', 'string', 'max:100'],
-            'last_name'       => ['required', 'string', 'max:100'],
-            'extension_name'  => ['nullable', 'string', 'max:20'],
-            'birthdate'       => ['required', 'date', 'before:today'],
-            'sex'             => ['required', 'in:Male,Female'],
-            'place_of_birth'  => ['required', 'string', 'max:255'],
-            'civil_status'    => ['nullable', 'string', 'max:50'],
-            'mother_tongue'   => ['required', 'string', 'max:100'],
-            'religion'        => ['nullable', 'string', 'max:100'],
-            'ip_community'    => ['nullable', 'string', 'max:255'],
+            'lrn' => ['nullable', 'digits:12'],
+            'first_name' => ['required', 'string', 'max:100'],
+            'middle_name' => ['nullable', 'string', 'max:100'],
+            'last_name' => ['required', 'string', 'max:100'],
+            'extension_name' => ['nullable', 'string', 'max:20'],
+            'birthdate' => ['required', 'date', 'before:today'],
+            'sex' => ['required', 'in:Male,Female'],
+            'place_of_birth' => ['required', 'string', 'max:255'],
+            'civil_status' => ['nullable', 'string', 'max:50'],
+            'mother_tongue' => ['required', 'string', 'max:100'],
+            'religion' => ['nullable', 'string', 'max:100'],
+            'ip_community' => ['nullable', 'string', 'max:255'],
             'disability_type' => ['nullable', 'string', 'max:255'],
-            'household_id'    => ['nullable', 'regex:/^\d+$/', 'max:100'],
-            'mobile'          => ['required', 'string', 'max:20'],
-            'current_address'  => ['required', 'string', 'max:255'],
+            'household_id' => ['nullable', 'regex:/^\d+$/', 'max:100'],
+            'mobile' => ['required', 'string', 'max:20'],
+            'current_address' => ['required', 'string', 'max:255'],
             'current_barangay' => ['required', 'string', 'max:100'],
-            'current_city'     => ['required', 'string', 'max:100'],
+            'current_city' => ['required', 'string', 'max:100'],
             'current_province' => ['required', 'string', 'max:100'],
-            'current_zip'      => ['nullable', 'string', 'max:10'],
-            'permanent_address'  => ['nullable', 'string', 'max:255'],
+            'current_zip' => ['nullable', 'string', 'max:10'],
+            'permanent_address' => ['nullable', 'string', 'max:255'],
             'permanent_barangay' => ['nullable', 'string', 'max:100'],
-            'permanent_city'     => ['nullable', 'string', 'max:100'],
+            'permanent_city' => ['nullable', 'string', 'max:100'],
             'permanent_province' => ['nullable', 'string', 'max:100'],
-            'permanent_zip'      => ['nullable', 'string', 'max:10'],
-            'father_name'           => ['nullable', 'string', 'max:150'],
-            'father_contact'        => ['nullable', 'string', 'max:20'],
-            'mother_name'           => ['nullable', 'string', 'max:150'],
-            'mother_contact'        => ['nullable', 'string', 'max:20'],
-            'guardian_name'         => ['nullable', 'string', 'max:150'],
+            'permanent_zip' => ['nullable', 'string', 'max:10'],
+            'father_name' => ['nullable', 'string', 'max:150'],
+            'father_contact' => ['nullable', 'string', 'max:20'],
+            'mother_name' => ['nullable', 'string', 'max:150'],
+            'mother_contact' => ['nullable', 'string', 'max:20'],
+            'guardian_name' => ['nullable', 'string', 'max:150'],
             'guardian_relationship' => ['nullable', 'string', 'max:50'],
-            'guardian_contact'      => ['nullable', 'string', 'max:20'],
+            'guardian_contact' => ['nullable', 'string', 'max:20'],
         ]);
 
-        $data['is_ip']          = $request->boolean('is_ip');
+        $data['is_ip'] = $request->boolean('is_ip');
         $data['has_disability'] = $request->boolean('has_disability');
-        $data['is_4ps']         = $request->boolean('is_4ps');
+        $data['is_4ps'] = $request->boolean('is_4ps');
         $data['permanent_same'] = $request->boolean('permanent_same');
 
         $application->update($data);
@@ -159,13 +154,13 @@ class ApplicationController extends Controller
     private function saveStep2(Request $request, Application $application): void
     {
         $data = $request->validate([
-            'jhs_name'                  => ['required', 'string', 'max:255'],
-            'jhs_school_id'             => ['nullable', 'string', 'max:100'],
-            'jhs_year_graduated'        => ['required', 'string', 'max:10'],
-            'general_average'           => ['required', 'numeric', 'min:0', 'max:100'],
-            'elementary_name'           => ['required', 'string', 'max:255'],
+            'jhs_name' => ['required', 'string', 'max:255'],
+            'jhs_school_id' => ['nullable', 'string', 'max:100'],
+            'jhs_year_graduated' => ['required', 'string', 'max:10'],
+            'general_average' => ['required', 'numeric', 'min:0', 'max:100'],
+            'elementary_name' => ['required', 'string', 'max:255'],
             'elementary_year_graduated' => ['nullable', 'string', 'max:10'],
-            'strand_id'                 => ['required', 'exists:strands,id'],
+            'strand_id' => ['required', 'exists:strands,id'],
         ]);
 
         $data['grade_level'] = '11';
@@ -176,7 +171,7 @@ class ApplicationController extends Controller
     private function saveStep3(Request $request, Application $application): void
     {
         $request->validate([
-            'documents'   => ['array'],
+            'documents' => ['array'],
             'documents.*' => ['file', 'mimes:pdf,jpg,jpeg,png', 'max:5120'],
         ]);
 
@@ -199,13 +194,11 @@ class ApplicationController extends Controller
         if ($missing) {
             $labels = array_map(fn ($t) => $this->documentTypes[$t], $missing);
 
-            throw \Illuminate\Validation\ValidationException::withMessages([
+            throw ValidationException::withMessages([
                 'documents' => 'Please upload: '.implode(', ', $labels),
             ]);
         }
     }
-
-    // ── Helpers ────────────────────────────────────────────────────────────
 
     private function draftFor(User $user): Application
     {
@@ -220,13 +213,13 @@ class ApplicationController extends Controller
         $parts = preg_split('/\s+/', trim($user->name), 2);
 
         return [
-            'first_name'   => $parts[0] ?? '',
-            'last_name'    => $parts[1] ?? '',
-            'birthdate'    => $user->birthdate,
-            'email'        => $user->email,
-            'status'       => 'draft',
+            'first_name' => $parts[0] ?? '',
+            'last_name' => $parts[1] ?? '',
+            'birthdate' => $user->birthdate,
+            'email' => $user->email,
+            'status' => 'draft',
             'current_step' => 1,
-            'grade_level'  => '11',
+            'grade_level' => '11',
         ];
     }
 }

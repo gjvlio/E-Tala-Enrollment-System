@@ -10,7 +10,6 @@ use Illuminate\Support\Facades\DB;
 
 class GradeController extends Controller
 {
-    // Show grade encoding form for an approved enrollment.
     public function show(Request $request, $enrollment)
     {
         $enrollment = Enrollment::with(['student', 'section.strand', 'enrollmentSubjects.subject'])
@@ -19,15 +18,14 @@ class GradeController extends Controller
         return view('registrar.grades.form', compact('enrollment'));
     }
 
-    // Save grades per subject for an enrollment.
     public function update(Request $request, $enrollment)
     {
         $enrollment = Enrollment::with('enrollmentSubjects')->findOrFail($enrollment);
 
         $validated = $request->validate([
-            'grades'              => ['required', 'array'],
-            'grades.*.grade'      => ['nullable', 'numeric', 'min:60', 'max:100'],
-            'grades.*.status'     => ['required', 'in:enrolled,passed,failed,dropped'],
+            'grades' => ['required', 'array'],
+            'grades.*.grade' => ['nullable', 'numeric', 'min:60', 'max:100'],
+            'grades.*.status' => ['required', 'in:enrolled,passed,failed,dropped'],
         ]);
 
         DB::transaction(function () use ($enrollment, $validated) {
@@ -37,7 +35,7 @@ class GradeController extends Controller
                 }
                 $row = $validated['grades'][$es->id];
                 $es->update([
-                    'grade'  => $row['grade'] ?? null,
+                    'grade' => $row['grade'] ?? null,
                     'status' => $row['status'],
                 ]);
             }

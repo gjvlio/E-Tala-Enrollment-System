@@ -1,5 +1,8 @@
 <?php
 
+use App\Http\Middleware\CheckRole;
+use App\Http\Middleware\EnsureAdmitted;
+use App\Http\Middleware\EnsurePasswordChanged;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -15,8 +18,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // Render terminates TLS at a proxy. Trust its forwarding headers so the
         // request is seen as https — otherwise signed URLs (email verification)
         // are rebuilt as http and fail with a 403 invalid signature.
-        $middleware->trustProxies(at: '*', headers:
-            Request::HEADER_X_FORWARDED_FOR |
+        $middleware->trustProxies(at: '*', headers: Request::HEADER_X_FORWARDED_FOR |
             Request::HEADER_X_FORWARDED_HOST |
             Request::HEADER_X_FORWARDED_PORT |
             Request::HEADER_X_FORWARDED_PROTO |
@@ -24,9 +26,9 @@ return Application::configure(basePath: dirname(__DIR__))
         );
 
         $middleware->alias([
-            'role' => \App\Http\Middleware\CheckRole::class,
-            'admitted' => \App\Http\Middleware\EnsureAdmitted::class,
-            'mustchange' => \App\Http\Middleware\EnsurePasswordChanged::class,
+            'role' => CheckRole::class,
+            'admitted' => EnsureAdmitted::class,
+            'mustchange' => EnsurePasswordChanged::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

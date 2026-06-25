@@ -6,13 +6,12 @@ use Illuminate\Database\Eloquent\Model;
 
 class ApplicationDocument extends Model
 {
-    // required admission documents (type => label)
     public const TYPES = [
-        'sf10'       => 'SF10 / Form 137',
-        'sf9'        => 'SF9 / Report Card (Grade 10)',
+        'sf10' => 'SF10 / Form 137',
+        'sf9' => 'SF9 / Report Card (Grade 10)',
         'good_moral' => 'Certificate of Good Moral Character',
-        'psa'        => 'PSA Birth Certificate',
-        'photo'      => '2x2 ID Photo',
+        'psa' => 'PSA Birth Certificate',
+        'photo' => '2x2 ID Photo',
     ];
 
     protected $fillable = [

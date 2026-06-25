@@ -11,7 +11,6 @@ use Illuminate\Http\Request;
 
 class SemesterRecordController extends Controller
 {
-    // Show all semester records (GPA per semester) for a student.
     public function showSemesterRecord(Request $request, $student)
     {
         $student = Student::with(['user', 'semesterRecords.schoolYear'])->findOrFail($student);
@@ -22,7 +21,6 @@ class SemesterRecordController extends Controller
             ->sortBy(fn ($r) => $r->schoolYear->year_label.$r->semester)
             ->values();
 
-        // Match each record to its enrollment (section + graded subjects).
         $enrollments = $student->enrollments()
             ->with(['section', 'subjects'])
             ->get()
@@ -33,26 +31,25 @@ class SemesterRecordController extends Controller
         return view('registrar.records.show', compact('student', 'records', 'enrollments', 'schoolYears'));
     }
 
-    // Manually create/update a single semester record (GPA + lock).
     public function updateSemesterRecord(Request $request, $student)
     {
         $student = Student::findOrFail($student);
 
         $validated = $request->validate([
             'school_year_id' => ['required', 'exists:school_years,id'],
-            'semester'       => ['required', 'in:1st,2nd'],
-            'gpa'            => ['nullable', 'numeric', 'min:60', 'max:100'],
-            'is_locked'      => ['nullable', 'boolean'],
+            'semester' => ['required', 'in:1st,2nd'],
+            'gpa' => ['nullable', 'numeric', 'min:60', 'max:100'],
+            'is_locked' => ['nullable', 'boolean'],
         ]);
 
         SemesterRecord::updateOrCreate(
             [
-                'student_id'     => $student->id,
+                'student_id' => $student->id,
                 'school_year_id' => $validated['school_year_id'],
-                'semester'       => $validated['semester'],
+                'semester' => $validated['semester'],
             ],
             [
-                'gpa'       => $validated['gpa'] ?? null,
+                'gpa' => $validated['gpa'] ?? null,
                 'is_locked' => (bool) ($validated['is_locked'] ?? false),
             ]
         );

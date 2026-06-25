@@ -26,7 +26,6 @@ class SchoolYear extends Model
         return $this->hasMany(Section::class);
     }
 
-    /** The single active school year, if any. */
     public static function active(): ?self
     {
         return static::where('is_active', true)->first();

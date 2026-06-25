@@ -6,8 +6,6 @@ use Illuminate\Http\Request;
 
 class TestController extends Controller
 {
-    // Landing / role selection page.
-    // Logged-in users skip straight to their dashboard.
     public function startPage(Request $request)
     {
         if ($user = $request->user()) {

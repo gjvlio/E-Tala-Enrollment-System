@@ -7,17 +7,7 @@ use Illuminate\Http\Request;
 
 class TwoFactorController extends Controller
 {
-    // Show the 2FA challenge form (user enters 6-digit code)
-    public function showChallenge(Request $request)
-    {
-        // TODO: return view('auth.two-factor-challenge');
-    }
+    public function showChallenge(Request $request) {}
 
-    // Verify submitted 2FA code and log the user in
-    public function postChallenge(Request $request)
-    {
-        // TODO: validate $request->code against user's two_factor_secret
-        // Success: redirect to dashboard based on role
-        // Failure: redirect back with error
-    }
+    public function postChallenge(Request $request) {}
 }

@@ -17,6 +17,7 @@ class EnrollmentRequirementTest extends TestCase
     use RefreshDatabase;
 
     private Strand $strand;
+
     private SchoolYear $sy;
 
     protected function setUp(): void
@@ -56,7 +57,7 @@ class EnrollmentRequirementTest extends TestCase
     public function test_grade12_must_upload_requirements_to_enroll(): void
     {
         $section = $this->section('12');
-        $user    = $this->student('12');
+        $user = $this->student('12');
 
         $this->actingAs($user)
             ->post(route('student.postEnrollForm'), ['section_id' => $section->id])
@@ -69,13 +70,13 @@ class EnrollmentRequirementTest extends TestCase
     {
         Storage::fake('public');
         $section = $this->section('12');
-        $user    = $this->student('12');
+        $user = $this->student('12');
 
         $this->actingAs($user)
             ->post(route('student.postEnrollForm'), [
                 'section_id' => $section->id,
-                'documents'  => [
-                    'sf9'   => UploadedFile::fake()->create('sf9.pdf', 100, 'application/pdf'),
+                'documents' => [
+                    'sf9' => UploadedFile::fake()->create('sf9.pdf', 100, 'application/pdf'),
                     'photo' => UploadedFile::fake()->image('photo.jpg'),
                 ],
             ])
@@ -88,7 +89,7 @@ class EnrollmentRequirementTest extends TestCase
     public function test_grade11_enrolls_without_documents(): void
     {
         $section = $this->section('11');
-        $user    = $this->student('11');
+        $user = $this->student('11');
 
         $this->actingAs($user)
             ->post(route('student.postEnrollForm'), ['section_id' => $section->id])

@@ -4,6 +4,7 @@ namespace App\Notifications;
 
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
+use Symfony\Component\Mime\Email;
 
 class PasswordChangeOtpNotification extends Notification
 {
@@ -14,9 +15,6 @@ class PasswordChangeOtpNotification extends Notification
         $this->code = $code;
     }
 
-    /**
-     * @return array<int, string>
-     */
     public function via(object $notifiable): array
     {
         return ['mail'];
@@ -27,7 +25,7 @@ class PasswordChangeOtpNotification extends Notification
         return (new MailMessage)
             ->subject('Your password change code — '.config('school.short'))
             ->markdown('emails.otp', ['code' => $this->code])
-            ->withSymfonyMessage(function (\Symfony\Component\Mime\Email $message) {
+            ->withSymfonyMessage(function (Email $message) {
                 $message->embedFromPath(public_path('images/logo.png'), 'logo');
             });
     }

@@ -9,10 +9,9 @@ use Illuminate\Support\Facades\Auth;
 
 class DashboardController extends Controller
 {
-    // Student home — active semester info, enrollment status summary.
     public function showDashboard(Request $request)
     {
-        $student   = Auth::user()->student;
+        $student = Auth::user()->student;
         $schoolYear = SchoolYear::active();
 
         $enrollment = $student

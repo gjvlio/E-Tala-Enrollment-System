@@ -3,13 +3,12 @@
 namespace App\Http\Controllers\Registrar;
 
 use App\Http\Controllers\Controller;
-use App\Models\Student;
 use App\Models\Strand;
+use App\Models\Student;
 use Illuminate\Http\Request;
 
 class StudentController extends Controller
 {
-    // List students — searchable, grouped by grade level → strand.
     public function showStudents(Request $request)
     {
         $students = Student::query()
@@ -28,7 +27,6 @@ class StudentController extends Controller
             ->orderBy('last_name')
             ->get();
 
-        // Group for the folder-style view: grade level → strand code
         $grouped = $students->groupBy([
             fn ($s) => 'Grade '.$s->grade_level,
             fn ($s) => $s->strand?->strand_code ?? 'Unassigned',
@@ -39,7 +37,6 @@ class StudentController extends Controller
         return view('registrar.students.index', compact('students', 'grouped', 'strands'));
     }
 
-    // Single student profile + enrollment history + semester records.
     public function showStudent(Request $request, $student)
     {
         $student = Student::with([

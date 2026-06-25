@@ -83,7 +83,7 @@ class ApplicationFlowTest extends TestCase
     {
         Storage::fake('public');
         $this->seed(StrandSeeder::class);
-        $user   = $this->applicant();
+        $user = $this->applicant();
         $strand = Strand::firstOrFail();
 
         $this->actingAs($user)->get('/application');
@@ -122,7 +122,7 @@ class ApplicationFlowTest extends TestCase
     public function test_registrar_can_return_application_for_compliance(): void
     {
         Notification::fake();
-        $applicant   = $this->applicant();
+        $applicant = $this->applicant();
         $application = Application::create([
             'user_id' => $applicant->id, 'status' => 'pending',
             'first_name' => 'Juan', 'last_name' => 'Cruz', 'submitted_at' => now(),
@@ -144,7 +144,7 @@ class ApplicationFlowTest extends TestCase
         $strand = Strand::create(['strand_code' => 'STEM', 'strand_name' => 'Science']);
         $this->makeSection($strand, 40);
 
-        $applicant   = $this->applicant();
+        $applicant = $this->applicant();
         $application = $this->pendingApplication($applicant, $strand);
 
         $this->actingAs($this->registrar())
@@ -172,7 +172,7 @@ class ApplicationFlowTest extends TestCase
             'first_name' => 'F', 'last_name' => 'L', 'strand_id' => $strand->id, 'grade_level' => '11',
         ]);
 
-        $applicant   = $this->applicant();
+        $applicant = $this->applicant();
         $application = $this->pendingApplication($applicant, $strand);
 
         $this->actingAs($this->registrar())

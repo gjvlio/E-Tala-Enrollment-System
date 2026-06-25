@@ -9,10 +9,9 @@ use Illuminate\Support\Facades\Auth;
 
 class SubjectController extends Controller
 {
-    // Subjects for the student's current (approved) enrollment, with grades if encoded.
     public function showSubjects(Request $request)
     {
-        $student    = Auth::user()->student;
+        $student = Auth::user()->student;
         $schoolYear = SchoolYear::active();
 
         $enrollment = $student->enrollments()

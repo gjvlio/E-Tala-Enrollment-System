@@ -14,7 +14,6 @@ use Illuminate\Support\Facades\DB;
 
 class SectionController extends Controller
 {
-    // List sections grouped by grade level → strand.
     public function showSections(Request $request)
     {
         $sections = Section::with(['strand', 'schoolYear'])
@@ -34,8 +33,8 @@ class SectionController extends Controller
     public function showCreateSection()
     {
         return view('registrar.sections.form', [
-            'section'    => null,
-            'strands'    => Strand::orderBy('strand_code')->get(),
+            'section' => null,
+            'strands' => Strand::orderBy('strand_code')->get(),
             'schoolYears' => SchoolYear::orderByDesc('year_label')->get(),
             'allSubjects' => Subject::orderBy('subject_code')->get(),
         ]);
@@ -57,7 +56,7 @@ class SectionController extends Controller
 
     public function showSection(Request $request, $section)
     {
-        // No dedicated show view — editing covers detail + subject assignment.
+
         return redirect()->route('registrar.sections.showEditSection', $section);
     }
 
@@ -66,8 +65,8 @@ class SectionController extends Controller
         $section = Section::with('subjects')->findOrFail($section);
 
         return view('registrar.sections.form', [
-            'section'     => $section,
-            'strands'     => Strand::orderBy('strand_code')->get(),
+            'section' => $section,
+            'strands' => Strand::orderBy('strand_code')->get(),
             'schoolYears' => SchoolYear::orderByDesc('year_label')->get(),
             'allSubjects' => Subject::orderBy('subject_code')->get(),
         ]);
@@ -106,7 +105,6 @@ class SectionController extends Controller
             ->with('success', 'Section deleted.');
     }
 
-    // a section's weekly timetable
     public function showSchedule(Request $request, $section)
     {
         $section = Section::with(['strand', 'schoolYear', 'subjects'])->findOrFail($section);
@@ -114,7 +112,6 @@ class SectionController extends Controller
         return view('registrar.sections.schedule', compact('section'));
     }
 
-    // (re)generate the section's weekly schedule
     public function generateSchedule(Request $request, $section, ScheduleGenerator $generator)
     {
         $section = Section::with('subjects')->findOrFail($section);
@@ -129,19 +126,18 @@ class SectionController extends Controller
                 : 'Add subjects to this section first, then create the schedule.');
     }
 
-    /** Shared validation for create/update. */
     private function validateSection(Request $request, ?int $ignoreId = null): array
     {
         return $request->validate([
-            'strand_id'      => ['required', 'exists:strands,id'],
+            'strand_id' => ['required', 'exists:strands,id'],
             'school_year_id' => ['required', 'exists:school_years,id'],
-            'grade_level'    => ['required', 'in:11,12'],
-            'semester'       => ['required', 'in:1st,2nd'],
-            'section_name'   => ['required', 'string', 'max:50'],
-            'time_period'    => ['required', 'in:AM,PM'],
-            'max_capacity'   => ['required', 'integer', 'min:1', 'max:100'],
-            'subject_ids'    => ['array'],
-            'subject_ids.*'  => ['exists:subjects,id'],
+            'grade_level' => ['required', 'in:11,12'],
+            'semester' => ['required', 'in:1st,2nd'],
+            'section_name' => ['required', 'string', 'max:50'],
+            'time_period' => ['required', 'in:AM,PM'],
+            'max_capacity' => ['required', 'integer', 'min:1', 'max:100'],
+            'subject_ids' => ['array'],
+            'subject_ids.*' => ['exists:subjects,id'],
         ]);
     }
 }

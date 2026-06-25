@@ -11,8 +11,8 @@ return new class extends Migration
         Schema::create('password_change_otps', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
-            $table->string('code');          
-            $table->string('new_password');  
+            $table->string('code');
+            $table->string('new_password');
             $table->timestamp('expires_at');
             $table->timestamps();
         });

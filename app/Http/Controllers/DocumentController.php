@@ -10,8 +10,6 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class DocumentController extends Controller
 {
-    // Stream an admission application document. Registrar sees all; a student
-    // may only open documents attached to their own application.
     public function application(Request $request, ApplicationDocument $document): StreamedResponse
     {
         $document->loadMissing('application');
@@ -21,7 +19,6 @@ class DocumentController extends Controller
         return $this->stream($document->path, $document->original_name);
     }
 
-    // Stream a Grade 12 enrollment requirement. Same ownership rules.
     public function enrollment(Request $request, EnrollmentDocument $document): StreamedResponse
     {
         $document->loadMissing('enrollment.student');
@@ -31,7 +28,6 @@ class DocumentController extends Controller
         return $this->stream($document->path, $document->original_name);
     }
 
-    // Registrars can view any document; students only their own uploads.
     private function authorizeView(Request $request, ?int $ownerUserId): void
     {
         $user = $request->user();

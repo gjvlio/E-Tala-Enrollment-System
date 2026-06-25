@@ -4,10 +4,12 @@ namespace App\Notifications;
 
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
+use Symfony\Component\Mime\Email;
 
 class ApplicationQualifiedNotification extends Notification
 {
     public string $schoolId;
+
     public string $defaultPassword;
 
     public function __construct(string $schoolId, string $defaultPassword)
@@ -16,9 +18,6 @@ class ApplicationQualifiedNotification extends Notification
         $this->defaultPassword = $defaultPassword;
     }
 
-    /**
-     * @return array<int, string>
-     */
     public function via(object $notifiable): array
     {
         return ['mail'];
@@ -33,7 +32,7 @@ class ApplicationQualifiedNotification extends Notification
                 'password' => $this->defaultPassword,
                 'loginUrl' => route('login'),
             ])
-            ->withSymfonyMessage(function (\Symfony\Component\Mime\Email $message) {
+            ->withSymfonyMessage(function (Email $message) {
                 $message->embedFromPath(public_path('images/logo.png'), 'logo');
             });
     }

@@ -11,23 +11,15 @@ use Illuminate\View\View;
 
 class AuthenticatedSessionController extends Controller
 {
-    /**
-     * Display the login view.
-     */
     public function create(): View
     {
         return view('auth.login');
     }
 
-    /**
-     * Handle an incoming authentication request.
-     */
     public function store(LoginRequest $request): RedirectResponse
     {
         $request->authenticate();
 
-        // Each portal is role-designated (set by the landing page). Block a student
-        // logging in through the registrar portal and vice versa.
         $registrarPortal = $request->query('portal') === 'registrar';
         if ($registrarPortal !== ($request->user()->role === 'registrar')) {
             Auth::guard('web')->logout();
@@ -52,9 +44,6 @@ class AuthenticatedSessionController extends Controller
         );
     }
 
-    /**
-     * Destroy an authenticated session.
-     */
     public function destroy(Request $request): RedirectResponse
     {
         Auth::guard('web')->logout();

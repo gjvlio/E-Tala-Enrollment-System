@@ -1,56 +1,49 @@
 <?php
 
-use App\Http\Controllers\TestController;
-use App\Http\Controllers\DocumentController;
-use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Auth\FirstPasswordController;
 use App\Http\Controllers\Auth\TwoFactorController;
-use App\Http\Controllers\Student\ApplicationController as StudentApplication;
-use App\Http\Controllers\Student\DashboardController as StudentDashboard;
-use App\Http\Controllers\Student\EnrollmentController as StudentEnrollment;
-use App\Http\Controllers\Student\SubjectController as StudentSubject;
-use App\Http\Controllers\Student\RecordController as StudentRecord;
-use App\Http\Controllers\Student\SectionController as StudentSection;
+use App\Http\Controllers\DocumentController;
+use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Registrar\ApplicationController as RegistrarApplication;
 use App\Http\Controllers\Registrar\DashboardController as RegistrarDashboard;
 use App\Http\Controllers\Registrar\EnrollmentController as RegistrarEnrollment;
-use App\Http\Controllers\Registrar\StudentController as RegistrarStudent;
+use App\Http\Controllers\Registrar\GradeController as RegistrarGrade;
 use App\Http\Controllers\Registrar\SectionController as RegistrarSection;
-use App\Http\Controllers\Registrar\SubjectController as RegistrarSubject;
 use App\Http\Controllers\Registrar\SemesterController as RegistrarSemester;
 use App\Http\Controllers\Registrar\SemesterRecordController as RegistrarSemesterRecord;
-use App\Http\Controllers\Registrar\GradeController as RegistrarGrade;
+use App\Http\Controllers\Registrar\StudentController as RegistrarStudent;
+use App\Http\Controllers\Registrar\SubjectController as RegistrarSubject;
+use App\Http\Controllers\Student\ApplicationController as StudentApplication;
+use App\Http\Controllers\Student\DashboardController as StudentDashboard;
+use App\Http\Controllers\Student\EnrollmentController as StudentEnrollment;
+use App\Http\Controllers\Student\RecordController as StudentRecord;
+use App\Http\Controllers\Student\SectionController as StudentSection;
+use App\Http\Controllers\Student\SubjectController as StudentSubject;
+use App\Http\Controllers\TestController;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
-
-// Landing / role selection
 Route::get('/', [TestController::class, 'startPage'])->name('landing');
 
-// First-login forced password change (admitted students using the default password)
 Route::middleware('auth')->group(function () {
     Route::get('/first-password', [FirstPasswordController::class, 'show'])->name('password.first');
     Route::post('/first-password', [FirstPasswordController::class, 'update'])->name('password.first.update');
 });
 
-// Breeze profile routes
 Route::middleware(['auth', 'mustchange'])->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-// Authed document streaming — bypasses the public storage symlink (avoids 403).
-// Controller enforces ownership: registrar sees all, student only their own.
 Route::middleware('auth')->group(function () {
     Route::get('/documents/application/{document}', [DocumentController::class, 'application'])->name('documents.application');
     Route::get('/documents/enrollment/{document}', [DocumentController::class, 'enrollment'])->name('documents.enrollment');
 });
 
-// 2FA Challenge
 Route::get('/two-factor-challenge', [TwoFactorController::class, 'showChallenge'])->name('two-factor.showChallenge');
 Route::post('/two-factor-challenge', [TwoFactorController::class, 'postChallenge'])->name('two-factor.postChallenge');
 
-// Admission application — verified students who are not yet admitted (no School ID)
 Route::middleware(['auth', 'verified', 'role:student'])->group(function () {
     Route::get('/application', [StudentApplication::class, 'show'])->name('application.show');
     Route::post('/application/save', [StudentApplication::class, 'save'])->name('application.save');
@@ -58,7 +51,6 @@ Route::middleware(['auth', 'verified', 'role:student'])->group(function () {
     Route::get('/application/status', [StudentApplication::class, 'status'])->name('application.status');
 });
 
-// Student Routes — must be authenticated, verified, admitted, and role=student
 Route::group(['prefix' => 'student', 'as' => 'student.', 'middleware' => ['auth', 'verified', 'admitted', 'mustchange', 'role:student']], function () {
     Route::get('/dashboard', [StudentDashboard::class, 'showDashboard'])->name('showDashboard');
 
@@ -73,11 +65,9 @@ Route::group(['prefix' => 'student', 'as' => 'student.', 'middleware' => ['auth'
     Route::get('/records', [StudentRecord::class, 'showRecords'])->name('showRecords');
 });
 
-// Registrar Routes — must be authenticated and role=registrar
 Route::group(['prefix' => 'registrar', 'as' => 'registrar.', 'middleware' => ['auth', 'verified', 'role:registrar']], function () {
     Route::get('/dashboard', [RegistrarDashboard::class, 'showDashboard'])->name('showDashboard');
 
-    // Semester / school year management
     Route::group(['prefix' => 'semester', 'as' => 'semester.'], function () {
         Route::get('/', [RegistrarSemester::class, 'index'])->name('index');
         Route::post('/', [RegistrarSemester::class, 'store'])->name('store');
@@ -87,14 +77,12 @@ Route::group(['prefix' => 'registrar', 'as' => 'registrar.', 'middleware' => ['a
         Route::post('/{schoolYear}/finalize', [RegistrarSemester::class, 'finalize'])->name('finalize');
     });
 
-    // Admission applications
     Route::get('/applications', [RegistrarApplication::class, 'showApplications'])->name('showApplications');
     Route::get('/applications/{application}', [RegistrarApplication::class, 'showApplication'])->name('showApplication');
     Route::post('/applications/{application}/return', [RegistrarApplication::class, 'returnApplication'])->name('returnApplication');
     Route::post('/applications/{application}/qualify', [RegistrarApplication::class, 'qualifyApplication'])->name('qualifyApplication');
     Route::post('/applications/{application}/designate', [RegistrarApplication::class, 'designateApplication'])->name('designateApplication');
 
-    // Enrollment management
     Route::get('/enrollments', [RegistrarEnrollment::class, 'showEnrollments'])->name('showEnrollments');
     Route::post('/enrollments/batch-approve', [RegistrarEnrollment::class, 'batchApprove'])->name('batchApproveEnrollments');
     Route::get('/enrollments/{enrollment}', [RegistrarEnrollment::class, 'showEnrollment'])->name('showEnrollment');
@@ -102,15 +90,12 @@ Route::group(['prefix' => 'registrar', 'as' => 'registrar.', 'middleware' => ['a
     Route::post('/enrollments/{enrollment}/reject', [RegistrarEnrollment::class, 'rejectEnrollment'])->name('rejectEnrollment');
     Route::post('/enrollments/{enrollment}/revert', [RegistrarEnrollment::class, 'revertEnrollment'])->name('revertEnrollment');
 
-    // Grade encoding
     Route::get('/enrollments/{enrollment}/grades', [RegistrarGrade::class, 'show'])->name('showGradeForm');
     Route::put('/enrollments/{enrollment}/grades', [RegistrarGrade::class, 'update'])->name('updateGrades');
 
-    // Student records
     Route::get('/students', [RegistrarStudent::class, 'showStudents'])->name('showStudents');
     Route::get('/students/{student}', [RegistrarStudent::class, 'showStudent'])->name('showStudent');
 
-    // Sections CRUD
     Route::group(['prefix' => 'sections', 'as' => 'sections.'], function () {
         Route::get('/', [RegistrarSection::class, 'showSections'])->name('showSections');
         Route::get('/create', [RegistrarSection::class, 'showCreateSection'])->name('showCreateSection');
@@ -123,7 +108,6 @@ Route::group(['prefix' => 'registrar', 'as' => 'registrar.', 'middleware' => ['a
         Route::delete('/{section}', [RegistrarSection::class, 'deleteSection'])->name('deleteSection');
     });
 
-    // Subjects CRUD
     Route::group(['prefix' => 'subjects', 'as' => 'subjects.'], function () {
         Route::get('/', [RegistrarSubject::class, 'showSubjects'])->name('showSubjects');
         Route::get('/create', [RegistrarSubject::class, 'showCreateSubject'])->name('showCreateSubject');
@@ -134,19 +118,18 @@ Route::group(['prefix' => 'registrar', 'as' => 'registrar.', 'middleware' => ['a
         Route::delete('/{subject}', [RegistrarSubject::class, 'deleteSubject'])->name('deleteSubject');
     });
 
-    // Semester records (per student)
     Route::get('/records/{student}', [RegistrarSemesterRecord::class, 'showSemesterRecord'])->name('showSemesterRecord');
     Route::put('/records/{student}', [RegistrarSemesterRecord::class, 'updateSemesterRecord'])->name('updateSemesterRecord');
 });
 
-// Generic dashboard redirect — role-aware
-Route::get('/dashboard', function (\Illuminate\Http\Request $request) {
+Route::get('/dashboard', function (Request $request) {
     $role = $request->user()->role;
     if ($role === 'student') {
         return redirect()->route('student.showDashboard');
     } elseif ($role === 'registrar') {
         return redirect()->route('registrar.showDashboard');
     }
+
     return redirect('/');
 })->middleware(['auth', 'verified', 'admitted', 'mustchange'])->name('dashboard');
 

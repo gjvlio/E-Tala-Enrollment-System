@@ -9,7 +9,7 @@ class Application extends Model
     protected $fillable = [
         'user_id',
         'current_step',
-        // personal
+
         'lrn',
         'first_name',
         'middle_name',
@@ -29,7 +29,7 @@ class Application extends Model
         'household_id',
         'mobile',
         'email',
-        // address
+
         'current_address',
         'current_barangay',
         'current_city',
@@ -41,7 +41,7 @@ class Application extends Model
         'permanent_city',
         'permanent_province',
         'permanent_zip',
-        // parents / guardian
+
         'father_name',
         'father_contact',
         'mother_name',
@@ -49,7 +49,7 @@ class Application extends Model
         'guardian_name',
         'guardian_relationship',
         'guardian_contact',
-        // education
+
         'jhs_name',
         'jhs_school_id',
         'jhs_year_graduated',
@@ -59,10 +59,10 @@ class Application extends Model
         'is_returning',
         'is_transferee',
         'previous_school',
-        // academic
+
         'strand_id',
         'grade_level',
-        // status / review (set by controllers, never from raw form input)
+
         'status',
         'submitted_at',
         'reviewed_by',
@@ -73,16 +73,16 @@ class Application extends Model
     protected function casts(): array
     {
         return [
-            'birthdate'       => 'date',
-            'is_ip'           => 'boolean',
-            'has_disability'  => 'boolean',
-            'is_4ps'          => 'boolean',
-            'permanent_same'  => 'boolean',
-            'is_returning'    => 'boolean',
-            'is_transferee'   => 'boolean',
+            'birthdate' => 'date',
+            'is_ip' => 'boolean',
+            'has_disability' => 'boolean',
+            'is_4ps' => 'boolean',
+            'permanent_same' => 'boolean',
+            'is_returning' => 'boolean',
+            'is_transferee' => 'boolean',
             'general_average' => 'decimal:2',
-            'submitted_at'    => 'datetime',
-            'reviewed_at'     => 'datetime',
+            'submitted_at' => 'datetime',
+            'reviewed_at' => 'datetime',
         ];
     }
 

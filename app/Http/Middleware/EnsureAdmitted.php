@@ -8,7 +8,6 @@ use Symfony\Component\HttpFoundation\Response;
 
 class EnsureAdmitted
 {
-    // A student with no School ID is still an applicant — keep them in the application flow.
     public function handle(Request $request, Closure $next): Response
     {
         $user = $request->user();

@@ -12,8 +12,8 @@ return [
     |
     */
 
-    'name'     => 'Cabrivex International Senior High School',
-    'short'    => 'CISHS',
+    'name' => 'Cabrivex International Senior High School',
+    'short' => 'CISHS',
     'platform' => env('APP_NAME', 'E-Tala Enrollment System'),
 
 ];

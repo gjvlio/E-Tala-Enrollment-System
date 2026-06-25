@@ -66,7 +66,6 @@ class Enrollment extends Model
         return $this->status === 'approved';
     }
 
-    /** Returned for compliance — the student may fix and re-submit. */
     public function isInvalid(): bool
     {
         return $this->status === 'invalid';

@@ -10,8 +10,8 @@ return new class extends Migration
     {
         Schema::create('strands', function (Blueprint $table) {
             $table->id();
-            $table->string('strand_code', 20)->unique(); 
-            $table->string('strand_name', 150);          
+            $table->string('strand_code', 20)->unique();
+            $table->string('strand_name', 150);
             $table->timestamps();
         });
     }

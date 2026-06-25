@@ -4,6 +4,7 @@ namespace App\Notifications;
 
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
+use Symfony\Component\Mime\Email;
 
 class ApplicationWaitlistedNotification extends Notification
 {
@@ -14,9 +15,6 @@ class ApplicationWaitlistedNotification extends Notification
         $this->strand = $strand;
     }
 
-    /**
-     * @return array<int, string>
-     */
     public function via(object $notifiable): array
     {
         return ['mail'];
@@ -27,7 +25,7 @@ class ApplicationWaitlistedNotification extends Notification
         return (new MailMessage)
             ->subject('Your application is waitlisted — '.config('school.short'))
             ->markdown('emails.waitlisted', ['strand' => $this->strand])
-            ->withSymfonyMessage(function (\Symfony\Component\Mime\Email $message) {
+            ->withSymfonyMessage(function (Email $message) {
                 $message->embedFromPath(public_path('images/logo.png'), 'logo');
             });
     }

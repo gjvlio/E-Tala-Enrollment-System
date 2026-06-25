@@ -4,11 +4,14 @@ namespace App\Notifications;
 
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
+use Symfony\Component\Mime\Email;
 
 class ApplicationDesignatedNotification extends Notification
 {
     public string $schoolId;
+
     public string $defaultPassword;
+
     public string $section;
 
     public function __construct(string $schoolId, string $defaultPassword, string $section)
@@ -18,9 +21,6 @@ class ApplicationDesignatedNotification extends Notification
         $this->section = $section;
     }
 
-    /**
-     * @return array<int, string>
-     */
     public function via(object $notifiable): array
     {
         return ['mail'];
@@ -33,10 +33,10 @@ class ApplicationDesignatedNotification extends Notification
             ->markdown('emails.designated', [
                 'schoolId' => $this->schoolId,
                 'password' => $this->defaultPassword,
-                'section'  => $this->section,
+                'section' => $this->section,
                 'loginUrl' => route('login'),
             ])
-            ->withSymfonyMessage(function (\Symfony\Component\Mime\Email $message) {
+            ->withSymfonyMessage(function (Email $message) {
                 $message->embedFromPath(public_path('images/logo.png'), 'logo');
             });
     }

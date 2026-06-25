@@ -4,6 +4,7 @@ namespace App\Notifications;
 
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;
+use Symfony\Component\Mime\Email;
 
 class ApplicationReturnedNotification extends Notification
 {
@@ -14,9 +15,6 @@ class ApplicationReturnedNotification extends Notification
         $this->remarks = $remarks;
     }
 
-    /**
-     * @return array<int, string>
-     */
     public function via(object $notifiable): array
     {
         return ['mail'];
@@ -28,9 +26,9 @@ class ApplicationReturnedNotification extends Notification
             ->subject('Action needed on your application — '.config('school.short'))
             ->markdown('emails.returned', [
                 'remarks' => $this->remarks,
-                'fixUrl'  => route('application.show'),
+                'fixUrl' => route('application.show'),
             ])
-            ->withSymfonyMessage(function (\Symfony\Component\Mime\Email $message) {
+            ->withSymfonyMessage(function (Email $message) {
                 $message->embedFromPath(public_path('images/logo.png'), 'logo');
             });
     }

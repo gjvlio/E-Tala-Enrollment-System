@@ -54,7 +54,6 @@ Route::middleware('auth')->group(function () {
 
     Route::put('password', [PasswordController::class, 'update'])->name('password.update');
 
-    // Email-OTP confirmation for a profile password change
     Route::get('password/otp', [PasswordController::class, 'showOtp'])
         ->name('password.otp');
     Route::post('password/otp', [PasswordController::class, 'confirmOtp'])

@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -10,7 +9,6 @@ use Illuminate\Notifications\Notifiable;
 
 class User extends Authenticatable implements MustVerifyEmail
 {
-    /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
 
     protected $fillable = [
@@ -48,7 +46,6 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasOne(Application::class);
     }
 
-    /** A bona fide student has been issued a School ID at admission. */
     public function isAdmitted(): bool
     {
         return ! is_null($this->school_id);
