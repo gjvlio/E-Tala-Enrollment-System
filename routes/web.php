@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\TestController;
+use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\Auth\FirstPasswordController;
 use App\Http\Controllers\Auth\TwoFactorController;
@@ -36,6 +37,13 @@ Route::middleware(['auth', 'mustchange'])->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+});
+
+// Authed document streaming — bypasses the public storage symlink (avoids 403).
+// Controller enforces ownership: registrar sees all, student only their own.
+Route::middleware('auth')->group(function () {
+    Route::get('/documents/application/{document}', [DocumentController::class, 'application'])->name('documents.application');
+    Route::get('/documents/enrollment/{document}', [DocumentController::class, 'enrollment'])->name('documents.enrollment');
 });
 
 // 2FA Challenge

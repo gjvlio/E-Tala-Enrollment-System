@@ -3,7 +3,6 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Storage;
 
 class ApplicationDocument extends Model
 {
@@ -35,6 +34,6 @@ class ApplicationDocument extends Model
 
     public function url(): string
     {
-        return Storage::url($this->path);
+        return route('documents.application', $this);
     }
 }
