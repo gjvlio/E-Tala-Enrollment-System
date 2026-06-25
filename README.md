@@ -99,8 +99,8 @@ Key rules:
 
 ```powershell
 # 1. Clone the repo
-git clone https://github.com/JJEEYYSSEE/Webdev_SchoolEnrollmentSystem.git
-cd Webdev_SchoolEnrollmentSystem
+git clone https://github.com/gjvlio/E-Tala-Enrollment-System.git
+cd E-Tala-Enrollment-System
 
 # 2. Install PHP dependencies
 composer install
@@ -123,7 +123,13 @@ php artisan serve
 
 App runs at: `http://localhost:8000`
 
-> `public/build/` is committed — teammates do not need to run `npm run dev`.
+> **No `npm` is needed to run the app.** The compiled CSS/JS is committed in `public/build/`
+> and Laravel serves it automatically. You do **not** run `npm install`, `npm run build`,
+> or `npm run dev` just to launch the project — only `php artisan serve`.
+>
+> `npm` is only for **editing** the frontend (`resources/sass`, `resources/js`):
+> run `npm install` once, then `npm run build` to recompile — or `npm run dev` for live
+> hot-reload while developing. Skip this entirely if you're just running/grading the app.
 
 ---
 
