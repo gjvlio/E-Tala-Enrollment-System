@@ -26,7 +26,7 @@ class ApplicationController extends Controller
 
         $application = $this->draftFor($user);
 
-        if (in_array($application->status, ['pending', 'qualified'])) {
+        if (in_array($application->status, ['pending', 'qualified', 'waitlisted'])) {
             return redirect()->route('application.status');
         }
 
@@ -43,7 +43,7 @@ class ApplicationController extends Controller
         $user        = $request->user();
         $application = $this->draftFor($user);
 
-        if (in_array($application->status, ['pending', 'qualified'])) {
+        if (in_array($application->status, ['pending', 'qualified', 'waitlisted'])) {
             return redirect()->route('application.status');
         }
 
@@ -73,7 +73,7 @@ class ApplicationController extends Controller
         $user        = $request->user();
         $application = $user->application;
 
-        if (! $application || in_array($application->status, ['pending', 'qualified'])) {
+        if (! $application || in_array($application->status, ['pending', 'qualified', 'waitlisted'])) {
             return redirect()->route('application.status');
         }
 
