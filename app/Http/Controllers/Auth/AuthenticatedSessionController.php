@@ -26,10 +26,23 @@ class AuthenticatedSessionController extends Controller
     {
         $request->authenticate();
 
+        // Each portal is role-designated (set by the landing page). Block a student
+        // logging in through the registrar portal and vice versa.
+        $registrarPortal = $request->query('portal') === 'registrar';
+        if ($registrarPortal !== ($request->user()->role === 'registrar')) {
+            Auth::guard('web')->logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            return back()
+                ->withInput($request->only('login'))
+                ->withErrors(['login' => $registrarPortal
+                    ? 'This is the registrar portal. Students and applicants must use the student login.'
+                    : 'This is a staff account. Please log in through the registrar portal.']);
+        }
+
         $request->session()->regenerate();
 
-        // return redirect()->intended(route('dashboard', absolute: false));
-        // return redirect()->intended(route('student.showDashboard', absolute: false));
         $user = $request->user();
 
         return redirect()->intended(
