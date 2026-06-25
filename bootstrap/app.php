@@ -12,6 +12,17 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Render terminates TLS at a proxy. Trust its forwarding headers so the
+        // request is seen as https — otherwise signed URLs (email verification)
+        // are rebuilt as http and fail with a 403 invalid signature.
+        $middleware->trustProxies(at: '*', headers:
+            Request::HEADER_X_FORWARDED_FOR |
+            Request::HEADER_X_FORWARDED_HOST |
+            Request::HEADER_X_FORWARDED_PORT |
+            Request::HEADER_X_FORWARDED_PROTO |
+            Request::HEADER_X_FORWARDED_AWS_ELB
+        );
+
         $middleware->alias([
             'role' => \App\Http\Middleware\CheckRole::class,
             'admitted' => \App\Http\Middleware\EnsureAdmitted::class,
