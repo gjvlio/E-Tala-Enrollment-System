@@ -22,6 +22,14 @@ class EnrollmentController extends Controller
         $enrollments = Enrollment::query()
             ->with(['student', 'section.strand'])
             ->when($schoolYear, fn ($q) => $q->whereHas('section', fn ($s) => $s->where('school_year_id', $schoolYear->id)))
+            ->when($request->search, function ($q) use ($request) {
+                $term = $request->search;
+                $q->whereHas('student', fn ($s) => $s->where(function ($sub) use ($term) {
+                    $sub->where('first_name', 'like', "%{$term}%")
+                        ->orWhere('last_name', 'like', "%{$term}%")
+                        ->orWhere('student_number', 'like', "%{$term}%");
+                }));
+            })
             ->when($request->status, fn ($q) => $q->where('status', $request->status))
             ->when($request->strand, fn ($q) => $q->whereHas('section', fn ($s) => $s->where('strand_id', $request->strand)))
             ->when($request->grade, fn ($q) => $q->whereHas('section', fn ($s) => $s->where('grade_level', $request->grade)))

@@ -41,7 +41,7 @@
         @php $tabs = ['' => 'All', 'pending' => 'Pending', 'approved' => 'Approved', 'invalid' => 'Invalid']; @endphp
         @foreach ($tabs as $value => $label)
             <li class="nav-item">
-                <a href="{{ route('registrar.showEnrollments', array_filter(['status' => $value, 'strand' => request('strand'), 'grade' => request('grade'), 'section' => request('section')])) }}"
+                <a href="{{ route('registrar.showEnrollments', array_filter(['status' => $value, 'search' => request('search'), 'strand' => request('strand'), 'grade' => request('grade'), 'section' => request('section')])) }}"
                    class="nav-link px-3 py-2 fw-semibold {{ ($currentStatus === $value || (!$currentStatus && $value === '')) ? 'active' : 'bg-white text-secondary border' }}">
                     {{ $label }}
                 </a>
@@ -54,7 +54,15 @@
         <div class="card-body py-3">
             <form method="GET" action="{{ route('registrar.showEnrollments') }}" class="row g-2 align-items-center">
                 <input type="hidden" name="status" value="{{ $currentStatus }}">
-                <div class="col-md-3">
+                <div class="col-md-4">
+                    <label class="form-label small fw-bold text-muted mb-1">Search</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-white"><i class="bi bi-search"></i></span>
+                        <input type="text" name="search" value="{{ request('search') }}" class="form-control"
+                               placeholder="Name or School ID">
+                    </div>
+                </div>
+                <div class="col-md-2">
                     <label class="form-label small fw-bold text-muted mb-1">Strand</label>
                     <select name="strand" class="form-select" onchange="this.form.submit()">
                         <option value="">All strands</option>
@@ -63,7 +71,7 @@
                         @endforeach
                     </select>
                 </div>
-                <div class="col-md-3">
+                <div class="col-md-2">
                     <label class="form-label small fw-bold text-muted mb-1">Grade Level</label>
                     <select name="grade" class="form-select" onchange="this.form.submit()">
                         <option value="">All grades</option>
@@ -82,7 +90,7 @@
                         @endforeach
                     </select>
                 </div>
-                @if (request()->hasAny(['strand', 'grade', 'section']))
+                @if (request()->hasAny(['search', 'strand', 'grade', 'section']))
                     <div class="col-md-2 align-self-end">
                         <a href="{{ route('registrar.showEnrollments', array_filter(['status' => $currentStatus])) }}" class="btn btn-outline-secondary w-100">
                             <i class="bi bi-x-lg me-1"></i> Clear

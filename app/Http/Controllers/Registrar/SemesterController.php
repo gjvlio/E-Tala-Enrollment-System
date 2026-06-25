@@ -123,8 +123,16 @@ class SemesterController extends Controller
                         'is_locked' => true,
                     ]
                 );
+
+                // Archive the enrollment so it no longer counts as active — every
+                // student must submit a fresh enrollment for the next wave.
+                $enrollment->update(['status' => 'completed']);
+
                 $locked++;
             }
+
+            // Close enrollment; the registrar reopens it to start the next wave.
+            $schoolYear->update(['is_enrollment_open' => false]);
 
             AuditLog::record('finalized_semester', 'SchoolYear', $schoolYear->id,
                 "Finalized {$validated['semester']} sem of {$schoolYear->year_label} ({$locked} records)");
