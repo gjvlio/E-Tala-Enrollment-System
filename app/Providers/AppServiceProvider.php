@@ -5,6 +5,7 @@ namespace App\Providers;
 use Illuminate\Auth\Notifications\VerifyEmail;
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Pagination\Paginator;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 
 class AppServiceProvider extends ServiceProvider
@@ -22,6 +23,13 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        // Render (and most PaaS) terminate TLS at a proxy, so the app sees http
+        // and emits http asset URLs that browsers block on the https page. Force
+        // https in production regardless of APP_URL/proxy headers.
+        if ($this->app->environment('production')) {
+            URL::forceScheme('https');
+        }
+
         // Bootstrap 5 pagination (Tailwind was removed) so prev/next arrows render sized.
         Paginator::useBootstrapFive();
 
