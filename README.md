@@ -1,6 +1,10 @@
-# School Enrollment System
+# E-Tala Enrollment System
 
-A web-based Senior High School (Grade 11–12, strand-based) enrollment system built with Laravel 13.
+A web-based Senior High School (Grade 11–12, strand-based) enrollment system for **Cabrivex International Senior High School (CISHS)**, built with Laravel 13.
+
+**🌐 Official website:** https://cishs-enrollment.onrender.com
+
+> Hosted on Render's free tier — the first request after idle may take ~30s to wake.
 
 ---
 
@@ -17,6 +21,17 @@ A web-based Senior High School (Grade 11–12, strand-based) enrollment system b
 | Build Tool | Vite | 8 |
 | Auth | Laravel Breeze | — |
 | Testing | PHPUnit | 12 |
+
+---
+
+## Group Members & Responsibilities
+
+| Member | Role | Primary Deliverables |
+|---|---|---|
+| **Rivera, Geuel John D.** | Project Lead / Back-end Core | Scaffolding, subject enrollment, middleware, authentication, deployment, mail services |
+| **Cabral, Shikina Y.** | Database & Back-end | ERD, migrations, seeders, section CRUD, admin dashboard, UI polish |
+| **Caparas, John Christian B.** | System Flow & QA | Project setup, user/system flow, system testing, UI polish |
+| **Exconde, Matan John B.** | Front-end | UI initialization, email template design |
 
 ---
 
