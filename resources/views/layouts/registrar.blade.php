@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', config('school.short', 'CISHS')) — Registrar</title>
-    @include('partials.icon-head')
+    @include('partials.icon-head', ['favicon' => '/images/favicon-blue.svg'])
     @vite(['resources/sass/app.scss', 'resources/js/app.js'])
 </head>
 <body class="portal-registrar">
@@ -93,6 +93,8 @@
         </div>
 
     </div>
+
+    @stack('modals')
 
     {{-- Site Footer --}}
     <footer class="portal-footer">
