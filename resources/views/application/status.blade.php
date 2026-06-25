@@ -24,6 +24,24 @@
                     <a href="{{ route('login') }}" class="btn btn-success">
                         <i class="bi bi-box-arrow-in-right me-1"></i> Go to Login
                     </a>
+                @elseif ($a->isWaitlisted())
+                    <div class="rounded-circle bg-info bg-opacity-10 d-inline-flex align-items-center justify-content-center text-info mb-3" style="width:72px;height:72px;">
+                        <i class="bi bi-hourglass-split" style="font-size:2.2rem;"></i>
+                    </div>
+                    <h4 class="fw-bold mb-2">You're Waitlisted</h4>
+                    <span class="badge bg-info-subtle text-info-emphasis mb-3">Waitlisted</span>
+                    <p class="text-muted mb-2">
+                        Your application met the requirements, but the slots for
+                        <strong>{{ optional($a->strand)->strand_code }} Grade {{ $a->grade_level }}</strong>
+                        are currently full.
+                    </p>
+                    <p class="text-muted small mb-4">
+                        You're on the waitlist. If a slot opens, the registrar will assign you to a section
+                        and email your <strong>School ID</strong> and <strong>default password</strong>.
+                        No further action is needed from you.
+                    </p>
+                    <p class="text-muted small mb-1">Reference No.</p>
+                    <p class="fw-bold mb-0">{{ $ref }}</p>
                 @else
                     <div class="rounded-circle bg-primary bg-opacity-10 d-inline-flex align-items-center justify-content-center text-primary mb-3" style="width:72px;height:72px;">
                         <i class="bi bi-hourglass-split" style="font-size:2.2rem;"></i>

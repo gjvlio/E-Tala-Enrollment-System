@@ -133,10 +133,31 @@
                             <div class="text-muted mt-1">Awaiting the applicant's re-submission.</div>
                         </div>
                     @elseif ($a->isWaitlisted())
-                        <div class="alert alert-warning small mb-0">
+                        <div class="alert alert-warning small mb-3">
                             <strong>Waitlisted.</strong> Slots for this strand were full at review time.
                             <div class="text-muted mt-1">No School ID issued yet.</div>
                         </div>
+
+                        @if ($vacantSections->isNotEmpty())
+                            <form method="POST" action="{{ route('registrar.designateApplication', $a) }}"
+                                  data-confirm="Designate this applicant to the selected section and issue a School ID?"
+                                  data-confirm-title="Designate Applicant" data-confirm-ok="Designate">
+                                @csrf
+                                <label class="form-label small fw-semibold">Designate to a vacant section</label>
+                                <select name="section_id" class="form-select mb-2" required>
+                                    @foreach ($vacantSections as $section)
+                                        <option value="{{ $section->id }}">
+                                            {{ $section->displayName() }} — {{ $section->remainingSlots() }} slot(s) left
+                                        </option>
+                                    @endforeach
+                                </select>
+                                <button type="submit" class="btn btn-success w-100" data-loading-text="Designating…">
+                                    <i class="bi bi-person-check me-1"></i> Designate &amp; Issue School ID
+                                </button>
+                            </form>
+                        @else
+                            <div class="text-muted small">No vacant sections available for Grade {{ $a->grade_level }} {{ optional($a->strand)->strand_code }} yet.</div>
+                        @endif
                     @else
                         <div class="alert alert-success small mb-0">
                             <strong>Qualified.</strong> School ID <strong>{{ $a->user->school_id }}</strong> issued.

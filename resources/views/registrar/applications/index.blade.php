@@ -13,6 +13,7 @@
             'application-returned'   => ['success', 'Application returned to the applicant for correction.'],
             'application-qualified'  => ['success', 'Applicant qualified — School ID issued and emailed.'],
             'application-waitlisted' => ['info', 'Applicant waitlisted — no slots left for that strand.'],
+            'application-designated' => ['success', 'Waitlisted applicant designated to a section — School ID issued and emailed.'],
         ];
     @endphp
 

@@ -92,6 +92,7 @@ Route::group(['prefix' => 'registrar', 'as' => 'registrar.', 'middleware' => ['a
     Route::get('/applications/{application}', [RegistrarApplication::class, 'showApplication'])->name('showApplication');
     Route::post('/applications/{application}/return', [RegistrarApplication::class, 'returnApplication'])->name('returnApplication');
     Route::post('/applications/{application}/qualify', [RegistrarApplication::class, 'qualifyApplication'])->name('qualifyApplication');
+    Route::post('/applications/{application}/designate', [RegistrarApplication::class, 'designateApplication'])->name('designateApplication');
 
     // Enrollment management
     Route::get('/enrollments', [RegistrarEnrollment::class, 'showEnrollments'])->name('showEnrollments');
