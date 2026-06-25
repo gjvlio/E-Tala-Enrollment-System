@@ -8,16 +8,17 @@
             if (!(form instanceof HTMLFormElement)) return;
             if (form.hasAttribute('data-no-loading')) return;
 
-            // Native HTML5 validation blocks the submit event when invalid,
-            // so reaching here means the form is valid and really submitting.
-            var btn = form.querySelector('[type="submit"]');
+            var btn = e.submitter || form.querySelector('[type="submit"]');
             if (!btn || btn.dataset.loading === '1') return;
 
+            if (btn.hasAttribute('formnovalidate') || btn.value === 'back') return;
+
             btn.dataset.loading = '1';
-            btn.disabled = true;
 
             var spinner = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>';
             btn.innerHTML = spinner + (btn.getAttribute('data-loading-text') || 'Please wait…');
+
+            setTimeout(function () { btn.disabled = true; }, 0);
         }, true);
     })();
 </script>

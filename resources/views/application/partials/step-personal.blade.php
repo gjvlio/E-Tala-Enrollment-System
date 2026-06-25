@@ -80,26 +80,31 @@
     </div>
 
     <div class="row g-3 mb-3">
+        @php
+            $ipOn  = old('is_ip', $a->is_ip);
+            $pwdOn = old('has_disability', $a->has_disability);
+            $fpOn  = old('is_4ps', $a->is_4ps);
+        @endphp
         <div class="col-md-4">
             <div class="form-check">
-                <input class="form-check-input" type="checkbox" name="is_ip" value="1" id="is_ip" @checked(old('is_ip', $a->is_ip))>
+                <input class="form-check-input" type="checkbox" name="is_ip" value="1" id="is_ip" data-toggle-target="ip_community" @checked($ipOn)>
                 <label class="form-check-label small" for="is_ip">Belongs to IP community</label>
             </div>
-            <input type="text" name="ip_community" value="{{ old('ip_community', $a->ip_community) }}" class="form-control form-control-sm mt-1" placeholder="Specify community">
+            <input type="text" name="ip_community" id="ip_community" value="{{ old('ip_community', $a->ip_community) }}" class="form-control form-control-sm mt-1" placeholder="Specify community" @disabled(! $ipOn)>
         </div>
         <div class="col-md-4">
             <div class="form-check">
-                <input class="form-check-input" type="checkbox" name="has_disability" value="1" id="has_disability" @checked(old('has_disability', $a->has_disability))>
+                <input class="form-check-input" type="checkbox" name="has_disability" value="1" id="has_disability" data-toggle-target="disability_type" @checked($pwdOn)>
                 <label class="form-check-label small" for="has_disability">Has disability / special needs</label>
             </div>
-            <input type="text" name="disability_type" value="{{ old('disability_type', $a->disability_type) }}" class="form-control form-control-sm mt-1" placeholder="Specify type">
+            <input type="text" name="disability_type" id="disability_type" value="{{ old('disability_type', $a->disability_type) }}" class="form-control form-control-sm mt-1" placeholder="Specify type" @disabled(! $pwdOn)>
         </div>
         <div class="col-md-4">
             <div class="form-check">
-                <input class="form-check-input" type="checkbox" name="is_4ps" value="1" id="is_4ps" @checked(old('is_4ps', $a->is_4ps))>
+                <input class="form-check-input" type="checkbox" name="is_4ps" value="1" id="is_4ps" data-toggle-target="household_id" @checked($fpOn)>
                 <label class="form-check-label small" for="is_4ps">4Ps beneficiary</label>
             </div>
-            <input type="text" name="household_id" value="{{ old('household_id', $a->household_id) }}" class="form-control form-control-sm mt-1" placeholder="Household ID No.">
+            <input type="text" name="household_id" id="household_id" value="{{ old('household_id', $a->household_id) }}" class="form-control form-control-sm mt-1" placeholder="Household ID No." inputmode="numeric" maxlength="100" @disabled(! $fpOn)>
         </div>
     </div>
 
@@ -195,3 +200,27 @@
         </button>
     </div>
 </form>
+
+<script>
+    (function () {
+        // Lock each "specify" field until its checkbox is ticked; clear it when unticked.
+        document.querySelectorAll('[data-toggle-target]').forEach(function (box) {
+            var field = document.getElementById(box.dataset.toggleTarget);
+            if (!field) return;
+
+            function sync() {
+                field.disabled = !box.checked;
+                if (!box.checked) field.value = '';
+            }
+            box.addEventListener('change', sync);
+        });
+
+        // Household ID accepts digits only.
+        var hh = document.getElementById('household_id');
+        if (hh) {
+            hh.addEventListener('input', function () {
+                this.value = this.value.replace(/\D+/g, '');
+            });
+        }
+    })();
+</script>

@@ -53,6 +53,9 @@ class Grade12ScenarioSeeder extends Seeder
                 ]);
             }
 
+            // Never enroll past the section's capacity (exact fills, no overflow).
+            $fill = min($fill, $capacity);
+
             // Attach subjects (core + strand-specific) to the section.
             $subjectIds = array_values(array_unique(array_merge($core, $strandSubjects($strandCode))));
             Section::find($sectionId)->subjects()->sync($subjectIds);

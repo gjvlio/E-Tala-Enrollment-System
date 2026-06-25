@@ -44,23 +44,6 @@
         </div>
     </div>
 
-    <div class="row g-3 mb-3">
-        <div class="col-md-6">
-            <div class="form-check">
-                <input class="form-check-input" type="checkbox" name="is_returning" value="1" id="is_returning" @checked(old('is_returning', $a->is_returning))>
-                <label class="form-check-label small" for="is_returning">Returning learner (balik-aral)</label>
-            </div>
-            <div class="form-check">
-                <input class="form-check-input" type="checkbox" name="is_transferee" value="1" id="is_transferee" @checked(old('is_transferee', $a->is_transferee))>
-                <label class="form-check-label small" for="is_transferee">Transferee</label>
-            </div>
-        </div>
-        <div class="col-md-6">
-            <label class="form-label small fw-semibold">Previous School <span class="text-muted fw-normal">(if transferee)</span></label>
-            <input type="text" name="previous_school" value="{{ old('previous_school', $a->previous_school) }}" class="form-control">
-        </div>
-    </div>
-
     <h6 class="fw-bold text-primary mb-3 mt-4 pt-2 border-top"><i class="bi bi-bookmark-star-fill me-1"></i> Track / Strand</h6>
     <div class="row g-3 mb-3">
         <div class="col-md-8">
